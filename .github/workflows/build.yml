@@ -19,6 +19,12 @@ jobs:
       - uses: ./.github/actions/setup
       - run: bun run build
 
+      - name: Get base ref
+        id: base
+        env:
+          BASE_REF: ${{ github.event_name == 'push' && github.ref_name || github.head_ref }}
+        run: echo "ref=${BASE_REF}" >> $GITHUB_OUTPUT
+
       - name: Check for changes in ./dist
         id: check
         run: |
@@ -29,9 +35,10 @@ jobs:
         if: ${{ failure() && steps.check.outcome == 'failure' }}
         with:
           token: ${{ github.token }}
-          title: Build ${{ github.ref_name }}
-          branch: build/${{ github.ref_name }}
-          commit-message: Build ${{ github.ref_name }}
+          title: Build ${{ steps.base.outputs.ref }}
+          base: ${{ steps.base.outputs.ref }}
+          branch: build/${{ steps.base.outputs.ref }}
+          commit-message: Build ${{ steps.base.outputs.ref }}
           body: |
             This PR was automatically created by the Build workflow.
             It contains the changes in the ./dist directory.

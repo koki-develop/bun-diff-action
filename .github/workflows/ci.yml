@@ -1,7 +1,8 @@
 name: CI
 
 on:
-  push:
+  pull_request:
+  # push: # TODO
 
 jobs:
   test:
@@ -18,13 +19,19 @@ jobs:
       - uses: ./.github/actions/setup
       - run: bun run lint
 
-  # NOTE: If you want to run the action to test the changes, you can uncomment the following job
-  # run-action:
-  #   needs:
-  #     - test
-  #     - lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/setup
-  #     - uses: ./
+  run-action:
+    needs:
+      - test
+      - lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - uses: ./
+        with:
+          token: ${{ github.token }}
