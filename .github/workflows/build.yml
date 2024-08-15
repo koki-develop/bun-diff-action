@@ -25,14 +25,20 @@ jobs:
           git add ./dist
           git diff --quiet --exit-code --staged ./dist
 
+      - name: Get base ref
+        id: base
+        env:
+          BASE_REF: ${{ github.event_name == 'push' && 'main' || github.head_ref }}
+        run: echo "ref=${BASE_REF}" >> $GITHUB_OUTPUT
+
       - uses: peter-evans/create-pull-request@v6
         if: ${{ failure() && steps.check.outcome == 'failure' }}
         with:
           token: ${{ github.token }}
-          title: Build ${{ github.ref_name }}
-          base: ${{ github.event_name == 'push' && 'main' || github.head_ref }}
-          branch: build/${{ github.ref_name }}
-          commit-message: Build ${{ github.ref_name }}
+          title: Build ${{ steps.base.outputs.ref }}
+          base: ${{ steps.base.outputs.ref }}
+          branch: build/${{ steps.base.outputs.ref }}
+          commit-message: Build ${{ steps.base.outputs.ref }}
           body: |
             This PR was automatically created by the Build workflow.
             It contains the changes in the ./dist directory.
