@@ -1,0 +1,37 @@
+name: Build
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: bun run build
+
+      - name: Check for changes in ./dist
+        id: check
+        run: |
+          git add ./dist
+          git diff --quiet --exit-code --staged ./dist
+
+      - uses: peter-evans/create-pull-request@v6
+        if: ${{ failure() && steps.check.outcome == 'failure' }}
+        with:
+          token: ${{ github.token }}
+          title: Build ${{ github.ref_name }}
+          branch: build/${{ github.ref_name }}
+          commit-message: Build ${{ github.ref_name }}
+          body: |
+            This PR was automatically created by the Build workflow.
+            It contains the changes in the ./dist directory.

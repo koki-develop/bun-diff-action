@@ -1,0 +1,30 @@
+{
+  "name": "ts-action-template",
+  "module": "index.ts",
+  "author": "koki-develop <kou.pg.0131@gmail.com>",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "test": "vitest",
+    "lint": "biome check",
+    "fmt": "biome check --write",
+    "prebuild": "bun run lint",
+    "build": "ncc build src/main.ts --out dist --minify --source-map --license licenses.txt",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@actions/core": "1.10.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.8.3",
+    "@types/bun": "latest",
+    "@vercel/ncc": "0.38.1",
+    "husky": "9.1.4",
+    "lint-staged": "15.2.9",
+    "typescript": "5.5.4",
+    "vitest": "2.0.5"
+  }
+}

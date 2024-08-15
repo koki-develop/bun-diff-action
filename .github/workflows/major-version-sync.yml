@@ -1,0 +1,17 @@
+name: Major Version Sync
+run-name: Major Version Sync - ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  major-version-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: koki-develop/major-version-sync@v1
+        with:
+          token: ${{ github.token }}

@@ -1,0 +1,21 @@
+name: Hello World
+description: Greet someone and record the time
+
+branding:
+  icon: send
+  color: white
+
+inputs:
+  message:
+    description: |-
+      The message to echo.
+    required: false
+    default: "Hello, world!"
+
+outputs:
+  message:
+    description: The message that was echoed.
+
+runs:
+  using: node20
+  main: dist/index.js
