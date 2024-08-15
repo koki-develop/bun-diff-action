@@ -74,8 +74,6 @@ export const main = async () => {
       );
 
       for (const lockb of lockbs) {
-        core.startGroup(lockb.filename);
-
         // fetch base branch
         core.debug(`Fetching base branch ${pullRequest.base.ref}...`);
         execSync(`git fetch origin ${pullRequest.base.ref}`);
@@ -86,7 +84,9 @@ export const main = async () => {
           `git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`,
           { encoding: "utf-8" },
         );
+        core.startGroup(lockb.filename);
         core.info(diff);
+        core.endGroup();
 
         // find comment for the `bun.lockb` file
         const comment = bunActionComments.find(
@@ -119,8 +119,6 @@ export const main = async () => {
           });
           core.debug("Created.");
         }
-
-        core.endGroup();
       }
 
       // delete old comments
@@ -160,8 +158,6 @@ export const main = async () => {
       );
 
       for (const lockb of lockbs) {
-        core.startGroup(lockb.filename);
-
         // fetch before commit
         const beforeSha = context.payload.before;
         core.debug(`Fetching before commit ${beforeSha}...`);
@@ -175,7 +171,9 @@ export const main = async () => {
             encoding: "utf-8",
           },
         );
+        core.startGroup(lockb.filename);
         core.info(diff);
+        core.endGroup();
 
         // find comment for the `bun.lockb` file
         const comment = bunActionComments.find((comment) => {
@@ -205,8 +203,6 @@ export const main = async () => {
           });
           core.debug("Created.");
         }
-
-        core.endGroup();
       }
 
       // delete old comments
