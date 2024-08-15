@@ -81,7 +81,7 @@ export const main = async () => {
 
         // get diff
         const diff = execSync(
-          `git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`,
+          `git diff ${pullRequest.base.ref} HEAD -- ${lockb.filename}`,
           { encoding: "utf-8" },
         );
         core.info(diff);
