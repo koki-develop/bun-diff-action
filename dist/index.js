@@ -29107,7 +29107,7 @@ const buildDiffComment = (params) => {
 ${params.diff}
 \`\`\`
 
-${_metadataPrefix}{${JSON.stringify(params.metadata)}}${_metadataSuffix}`;
+${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
     return params.title ? `## ${params.title}\n\n${base}` : base;
 };
 const hasBun = () => {
