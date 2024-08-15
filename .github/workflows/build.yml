@@ -19,18 +19,17 @@ jobs:
       - uses: ./.github/actions/setup
       - run: bun run build
 
+      - name: Get base ref
+        id: base
+        env:
+          BASE_REF: ${{ github.event_name == 'push' && github.ref_name || github.head_ref }}
+        run: echo "ref=${BASE_REF}" >> $GITHUB_OUTPUT
+
       - name: Check for changes in ./dist
         id: check
         run: |
           git add ./dist
           git diff --quiet --exit-code --staged ./dist
-
-      - name: Get base ref
-        if: ${{ failure() && steps.check.outcome == 'failure' }}
-        id: base
-        env:
-          BASE_REF: ${{ github.event_name == 'push' && 'main' || github.head_ref }}
-        run: echo "ref=${BASE_REF}" >> $GITHUB_OUTPUT
 
       - uses: peter-evans/create-pull-request@v6
         if: ${{ failure() && steps.check.outcome == 'failure' }}
