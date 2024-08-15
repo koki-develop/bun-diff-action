@@ -107,6 +107,7 @@ export const main = async () => {
             num: pullRequest.number,
             filename: lockb.filename,
             body: buildDiffComment({ diff }),
+            sha: pullRequest.head.sha,
           });
           core.debug("Created.");
         }

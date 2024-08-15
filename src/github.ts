@@ -43,20 +43,20 @@ export class GitHub {
     num: number;
     filename: string;
     body: string;
+    sha: string;
   }): Promise<void> {
-    await this.octokit.rest.pulls.createReview({
-      owner: this.config.owner,
-      repo: this.config.repo,
-      pull_number: params.num,
-      event: "COMMENT",
-      comments: [
-        {
-          path: params.filename,
-          body: params.body,
-          line: 0,
-        },
-      ],
-    });
+    await this.octokit.request(
+      "POST /repos/{owner}/{repo}/pulls/{pull_number}/comments",
+      {
+        owner: this.config.owner,
+        repo: this.config.repo,
+        pull_number: params.num,
+        body: params.body,
+        path: params.filename,
+        commit_id: params.sha,
+        subject_type: "file",
+      },
+    );
   }
 
   async updatePullRequestComment(params: {
