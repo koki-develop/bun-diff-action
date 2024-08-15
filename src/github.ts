@@ -53,6 +53,7 @@ export class GitHub {
         {
           path: params.filename,
           body: params.body,
+          line: 0,
         },
       ],
     });
