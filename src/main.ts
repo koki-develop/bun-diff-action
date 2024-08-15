@@ -64,9 +64,7 @@ export const main = async () => {
       );
 
       // fetch bun-action comments
-      const allComments = await github.listPullRequestComments(
-        pullRequest.number,
-      );
+      const allComments = await github.listReviewComments(pullRequest.number);
       const bunActionComments = allComments.filter((comment) =>
         isBunActionComment(comment),
       );
@@ -94,7 +92,7 @@ export const main = async () => {
         if (comment) {
           // update comment
           core.debug(`Updating comment ${comment.id}...`);
-          await github.updatePullRequestComment({
+          await github.updateReviewComment({
             num: pullRequest.number,
             commentId: comment.id,
             body: buildDiffComment({ diff }),
@@ -103,7 +101,7 @@ export const main = async () => {
         } else {
           // create comment
           core.debug("Creating comment...");
-          await github.createPullRequestComment({
+          await github.createReviewComment({
             num: pullRequest.number,
             filename: lockb.filename,
             body: buildDiffComment({ diff }),
@@ -119,7 +117,7 @@ export const main = async () => {
       for (const comment of bunActionComments) {
         if (!lockbs.some((lockb) => comment.path === lockb.filename)) {
           core.debug(`Deleting comment ${comment.id}...`);
-          await github.deletePullRequestComment({
+          await github.deleteReviewComment({
             num: pullRequest.number,
             commentId: comment.id,
           });
