@@ -169,10 +169,9 @@ export const main = async () => {
         core.startGroup(lockb.filename);
 
         // get diff
-        const diff = execSync(
-          "", // TODO: get diff
-          { encoding: "utf-8" },
-        );
+        const diff = execSync(`git diff HEAD^ -- ${lockb.filename}`, {
+          encoding: "utf-8",
+        });
         core.info(diff);
 
         // find comment for the `bun.lockb` file
