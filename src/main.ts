@@ -81,7 +81,9 @@ export const main = async () => {
         core.startGroup(lockb.filename);
 
         // fetch base branch
+        core.debug(`Fetching base branch ${pullRequest.base.ref}...`);
         execSync(`git fetch origin ${pullRequest.base.ref}`);
+        core.debug("Fetched.");
 
         // get diff
         const diff = execSync(
