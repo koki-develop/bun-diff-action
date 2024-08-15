@@ -26,6 +26,7 @@ jobs:
           git diff --quiet --exit-code --staged ./dist
 
       - name: Get base ref
+        if: ${{ failure() && steps.check.outcome == 'failure' }}
         id: base
         env:
           BASE_REF: ${{ github.event_name == 'push' && 'main' || github.head_ref }}
