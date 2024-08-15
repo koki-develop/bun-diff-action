@@ -29307,6 +29307,10 @@ const main = async () => {
                 .join("\n")}`);
             for (const lockb of lockbs) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_2__.startGroup(lockb.filename);
+                // fetch base branch
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Fetching base branch ${pullRequest.base.ref}...`);
+                (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(`git fetch origin ${pullRequest.base.ref}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Fetched.");
                 // get diff
                 const diff = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(`git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`, { encoding: "utf-8" });
                 _actions_core__WEBPACK_IMPORTED_MODULE_2__.info(diff);
@@ -29373,8 +29377,9 @@ const main = async () => {
             for (const lockb of lockbs) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_2__.startGroup(lockb.filename);
                 // get diff
-                const diff = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)("", // TODO: get diff
-                { encoding: "utf-8" });
+                const diff = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(`git diff HEAD^ -- ${lockb.filename}`, {
+                    encoding: "utf-8",
+                });
                 _actions_core__WEBPACK_IMPORTED_MODULE_2__.info(diff);
                 // find comment for the `bun.lockb` file
                 const comment = bunActionComments.find((comment) => {
