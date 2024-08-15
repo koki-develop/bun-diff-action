@@ -22,8 +22,6 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Important for the diff to work
       - uses: oven-sh/setup-bun@v2
       - uses: koki-develop/bun-diff-action@v1
         with:
