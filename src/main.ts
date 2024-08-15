@@ -56,10 +56,6 @@ export const main = async () => {
       const lockbs = files.filter(
         (file) => file.filename.split("/").slice(-1)[0] === "bun.lockb",
       );
-      if (lockbs.length === 0) {
-        core.info("No `bun.lockb` file found in the diff.");
-        return;
-      }
       core.debug(
         `found bun.lockb files:\n${lockbs
           .map((lockb) => `* ${lockb.filename}`)
@@ -146,10 +142,6 @@ export const main = async () => {
       const lockbs = files.filter(
         (file) => file.filename.split("/").slice(-1)[0] === "bun.lockb",
       );
-      if (lockbs.length === 0) {
-        core.info("No `bun.lockb` file found in the diff.");
-        return;
-      }
       core.debug(
         `found bun.lockb files:\n${lockbs
           .map((lockb) => `* ${lockb.filename}`)
