@@ -1,4 +1,3 @@
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 import * as core from "@actions/core";
 import { context } from "@actions/github";
@@ -9,6 +8,7 @@ import {
   isBunActionComment,
 } from "./bun-diff";
 import { GitHub } from "./github";
+import { sh } from "./sh";
 
 const _supportedEvents: string[] = ["pull_request", "push"] as const;
 
@@ -37,12 +37,10 @@ export const main = async () => {
 
     // set git config
     fs.writeFileSync(".gitattributes", "bun.lockb diff=lockb");
-    execSync("git config core.attributesFile .gitattributes");
-    execSync("git config diff.lockb.textconv bun");
-    execSync("git config diff.lockb.binary true");
-    core.debug(
-      `Git config: ${execSync("git config --list", { encoding: "utf-8" })}`,
-    );
+    sh("git config core.attributesFile .gitattributes");
+    sh("git config diff.lockb.textconv bun");
+    sh("git config diff.lockb.binary true");
+    sh("git config --list");
 
     if (context.eventName === "pull_request") {
       const pullRequest = context.payload.pull_request;
@@ -75,14 +73,11 @@ export const main = async () => {
 
       for (const lockb of lockbs) {
         // fetch base branch
-        core.debug(`Fetching base branch ${pullRequest.base.ref}...`);
-        execSync(`git fetch origin ${pullRequest.base.ref}`);
-        core.debug("Fetched.");
+        sh(`git fetch origin ${pullRequest.base.ref}`);
 
         // get diff
-        const diff = execSync(
+        const diff = sh(
           `git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`,
-          { encoding: "utf-8" },
         );
         core.startGroup(lockb.filename);
         core.info(diff);
@@ -160,17 +155,10 @@ export const main = async () => {
       for (const lockb of lockbs) {
         // fetch before commit
         const beforeSha = context.payload.before;
-        core.debug(`Fetching before commit ${beforeSha}...`);
-        execSync(`git fetch origin ${beforeSha}`);
-        core.debug("Fetched.");
+        sh(`git fetch origin ${beforeSha}`);
 
         // get diff
-        const diff = execSync(
-          `git diff ${beforeSha} HEAD -- ${lockb.filename}`,
-          {
-            encoding: "utf-8",
-          },
-        );
+        const diff = sh(`git diff ${beforeSha} HEAD -- ${lockb.filename}`);
         core.startGroup(lockb.filename);
         core.info(diff);
         core.endGroup();
