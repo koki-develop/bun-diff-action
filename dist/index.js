@@ -29082,22 +29082,33 @@ function wrappy (fn, cb) {
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "Gc": () => (/* binding */ hasBun),
 /* harmony export */   "YQ": () => (/* binding */ isBunActionComment),
+/* harmony export */   "mU": () => (/* binding */ extractMetadata),
 /* harmony export */   "oq": () => (/* binding */ buildDiffComment)
 /* harmony export */ });
 /* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7718);
 /* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_child_process__WEBPACK_IMPORTED_MODULE_0__);
 
-const _commentSuffix = "<!-- bun-diff-action -->";
+const _metadataPrefix = "<!-- bun-diff-action: ";
+const _metadataSuffix = " -->";
 const isBunActionComment = (comment) => {
-    return comment.body.trim().endsWith(_commentSuffix);
+    const lastLine = comment.body.trim().split("\n").slice(-1)[0];
+    if (!lastLine.startsWith(`${_metadataPrefix}{`))
+        return false;
+    if (!lastLine.endsWith(`}${_metadataSuffix}`))
+        return false;
+    return true;
+};
+const extractMetadata = (comment) => {
+    const lastLine = comment.body.trim().split("\n").slice(-1)[0];
+    return JSON.parse(lastLine.slice(_metadataPrefix.length, -_metadataSuffix.length));
 };
 const buildDiffComment = (params) => {
     const base = `\`\`\`diff
 ${params.diff}
 \`\`\`
 
-${_commentSuffix}`;
-    return params.title ? `## ${params.title}\n\n${base}` : base;
+${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
+    return params.header ? `${params.header}\n\n${base}` : base;
 };
 const hasBun = () => {
     try {
@@ -29232,116 +29243,187 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "D": () => (/* binding */ main)
 /* harmony export */ });
-/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7718);
-/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_child_process__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var node_fs__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(7561);
-/* harmony import */ var node_fs__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(node_fs__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(5438);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _bun_diff__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(3690);
-/* harmony import */ var _github__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(978);
+/* harmony import */ var node_fs__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7561);
+/* harmony import */ var node_fs__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_fs__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(5438);
+/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _bun_diff__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(3690);
+/* harmony import */ var _github__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(978);
+/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(2563);
 
 
 
 
 
 
-const _supportedEvents = [
-    "pull_request",
-    // TODO: support `push` event
-];
+const _supportedEvents = ["pull_request", "push"];
+// TODO: refactor
 const main = async () => {
     try {
         const inputs = {
-            token: _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput("token"),
+            token: _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput("token"),
         };
-        const github = new _github__WEBPACK_IMPORTED_MODULE_5__/* .GitHub */ .T({
+        const github = new _github__WEBPACK_IMPORTED_MODULE_4__/* .GitHub */ .T({
             token: inputs.token,
-            repo: _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.repo.repo,
-            owner: _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.repo.owner,
+            repo: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.repo,
+            owner: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.owner,
         });
-        _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Event: ${_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.eventName}`);
-        if (!_supportedEvents.includes(_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.eventName)) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Event: ${_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName}`);
+        if (!_supportedEvents.includes(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName)) {
             throw new Error(`Unsupported event: ${event}. This action supports only ${_supportedEvents.join(", ")} events.`);
         }
-        if (!(0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .hasBun */ .Gc)())
+        if (!(0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .hasBun */ .Gc)())
             throw new Error("bun is not installed.");
         // set git config
-        node_fs__WEBPACK_IMPORTED_MODULE_1___default().writeFileSync(".gitattributes", "bun.lockb diff=lockb");
-        (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)("git config core.attributesFile .gitattributes");
-        (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)("git config diff.lockb.textconv bun");
-        (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)("git config diff.lockb.binary true");
-        _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Git config: ${(0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)("git config --list", { encoding: "utf-8" })}`);
-        if (_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.eventName === "pull_request") {
-            const pullRequest = _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.payload.pull_request;
+        node_fs__WEBPACK_IMPORTED_MODULE_0___default().writeFileSync(".gitattributes", "bun.lockb diff=lockb");
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config core.attributesFile .gitattributes");
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config diff.lockb.textconv bun");
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config diff.lockb.binary true");
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config --list");
+        if (_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName === "pull_request") {
+            const pullRequest = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.payload.pull_request;
             if (!pullRequest) {
                 throw new Error("Failed to get pull request from context.");
             }
-            _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Pull request: ${JSON.stringify(pullRequest, null, 2)}`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Pull request: ${JSON.stringify(pullRequest, null, 2)}`);
             // find `bun.lockb` files
             const files = await github.listPullRequestFiles(pullRequest.number);
             const lockbs = files.filter((file) => file.filename.split("/").slice(-1)[0] === "bun.lockb");
-            if (lockbs.length === 0) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_2__.info("No `bun.lockb` file found in the diff.");
-                return;
-            }
-            _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`found bun.lockb files:\n${lockbs
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`found bun.lockb files:\n${lockbs
                 .map((lockb) => `* ${lockb.filename}`)
                 .join("\n")}`);
             // fetch bun-action comments
             const allComments = await github.listReviewComments(pullRequest.number);
-            const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .isBunActionComment */ .YQ)(comment));
-            _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`bun-action comments:\n${bunActionComments
+            const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .isBunActionComment */ .YQ)(comment));
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`bun-action comments:\n${bunActionComments
                 .map((comment) => `* ${comment.id}`)
                 .join("\n")}`);
             for (const lockb of lockbs) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_2__.startGroup(lockb.filename);
+                // fetch base branch
+                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git fetch origin ${pullRequest.base.ref}`);
                 // get diff
-                const diff = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(`git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`, { encoding: "utf-8" });
-                _actions_core__WEBPACK_IMPORTED_MODULE_2__.info(diff);
+                const diff = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
                 // find comment for the `bun.lockb` file
                 const comment = bunActionComments.find((comment) => comment.path === lockb.filename);
                 if (comment) {
                     // update comment
-                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Updating comment ${comment.id}...`);
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Updating comment ${comment.id}...`);
                     await github.updateReviewComment({
                         num: pullRequest.number,
                         commentId: comment.id,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({ diff }),
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
+                            diff,
+                            metadata: { path: lockb.filename },
+                        }),
                     });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Updated.");
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Updated.");
                 }
                 else {
                     // create comment
-                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Creating comment...");
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Creating comment...");
                     await github.createReviewComment({
                         num: pullRequest.number,
                         filename: lockb.filename,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({ diff }),
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
+                            diff,
+                            metadata: { path: lockb.filename },
+                        }),
                         sha: pullRequest.head.sha,
                     });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Created.");
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Created.");
                 }
-                _actions_core__WEBPACK_IMPORTED_MODULE_2__.endGroup();
             }
             // delete old comments
             for (const comment of bunActionComments) {
                 if (!lockbs.some((lockb) => comment.path === lockb.filename)) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Deleting comment ${comment.id}...`);
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Deleting comment ${comment.id}...`);
                     await github.deleteReviewComment({
                         num: pullRequest.number,
                         commentId: comment.id,
                     });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Deleted.");
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Deleted.");
+                }
+            }
+        }
+        if (_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName === "push") {
+            // find `bun.lockb` files
+            const files = await github.listCommitFiles(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha);
+            const lockbs = files.filter((file) => file.filename.split("/").slice(-1)[0] === "bun.lockb");
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`found bun.lockb files:\n${lockbs
+                .map((lockb) => `* ${lockb.filename}`)
+                .join("\n")}`);
+            // fetch bun-action comments
+            const allComments = await github.listCommitComments(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha);
+            const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .isBunActionComment */ .YQ)(comment));
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`bun-action comments:\n${bunActionComments
+                .map((comment) => `* ${comment.id}`)
+                .join("\n")}`);
+            for (const lockb of lockbs) {
+                // fetch before commit
+                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git fetch --depth=2 origin ${_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha}`);
+                // get diff
+                const diff = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git diff HEAD^ HEAD -- ${lockb.filename}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+                // find comment for the `bun.lockb` file
+                const comment = bunActionComments.find((comment) => {
+                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
+                    return metadata.path === lockb.filename;
+                });
+                if (comment) {
+                    // update comment
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Updating comment ${comment.id}...`);
+                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
+                    await github.updateCommitComment({
+                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
+                        commentId: comment.id,
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
+                            header: `\`${lockb.filename}\``,
+                            diff,
+                            metadata,
+                        }),
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Updated.");
+                }
+                else {
+                    // create comment
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Creating comment...");
+                    await github.createCommitComment({
+                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
+                            header: `\`${lockb.filename}\``,
+                            diff,
+                            metadata: { path: lockb.filename },
+                        }),
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Created.");
+                }
+            }
+            // delete old comments
+            for (const comment of bunActionComments) {
+                if (!lockbs.some((lockb) => {
+                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
+                    return metadata.path === lockb.filename;
+                })) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Deleting comment ${comment.id}...`);
+                    await github.deleteCommitComment({
+                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
+                        commentId: comment.id,
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Deleted.");
                 }
             }
         }
     }
     catch (error) {
         if (error instanceof Error) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed(error.message);
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(error.message);
         }
         else {
             throw error;
@@ -29352,6 +29434,30 @@ await main();
 
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
+/***/ 2563:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "sh": () => (/* binding */ sh)
+/* harmony export */ });
+/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7718);
+/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_child_process__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_1__);
+
+
+const sh = (command) => {
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`$ ${command}`);
+    const stdout = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(command, {
+        encoding: "utf-8",
+    });
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`${stdout}`);
+    return stdout;
+};
+
 
 /***/ }),
 

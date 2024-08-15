@@ -1,8 +1,9 @@
 name: CI
+run-name: CI (${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.sha }})
 
 on:
   pull_request:
-  # push: # TODO
+  push:
 
 jobs:
   test:
@@ -25,12 +26,10 @@ jobs:
       - lint
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: write
+      contents: write # Required to comment on the commit
+      pull-requests: write # Required to comment on the Pull Request
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/setup
       - uses: ./
         with:
