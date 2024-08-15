@@ -80,6 +80,9 @@ export const main = async () => {
       for (const lockb of lockbs) {
         core.startGroup(lockb.filename);
 
+        // fetch base branch
+        execSync(`git fetch origin ${pullRequest.base.ref}`);
+
         // get diff
         const diff = execSync(
           `git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`,
