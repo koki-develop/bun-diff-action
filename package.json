@@ -1,5 +1,5 @@
 {
-  "name": "ts-action-template",
+  "name": "bun-diff-action",
   "module": "index.ts",
   "author": "koki-develop <kou.pg.0131@gmail.com>",
   "private": true,
