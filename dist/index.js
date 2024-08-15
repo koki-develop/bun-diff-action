@@ -29368,8 +29368,13 @@ const main = async () => {
                 .join("\n")}`);
             for (const lockb of lockbs) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_2__.startGroup(lockb.filename);
+                // fetch before commit
+                const beforeSha = _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.payload.before;
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Fetching before commit ${beforeSha}...`);
+                (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(`git fetch origin ${beforeSha}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Fetched.");
                 // get diff
-                const diff = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(`git diff HEAD^ -- ${lockb.filename}`, {
+                const diff = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(`git diff ${beforeSha} HEAD -- ${lockb.filename}`, {
                     encoding: "utf-8",
                 });
                 _actions_core__WEBPACK_IMPORTED_MODULE_2__.info(diff);

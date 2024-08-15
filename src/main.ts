@@ -162,10 +162,19 @@ export const main = async () => {
       for (const lockb of lockbs) {
         core.startGroup(lockb.filename);
 
+        // fetch before commit
+        const beforeSha = context.payload.before;
+        core.debug(`Fetching before commit ${beforeSha}...`);
+        execSync(`git fetch origin ${beforeSha}`);
+        core.debug("Fetched.");
+
         // get diff
-        const diff = execSync(`git diff HEAD^ -- ${lockb.filename}`, {
-          encoding: "utf-8",
-        });
+        const diff = execSync(
+          `git diff ${beforeSha} HEAD -- ${lockb.filename}`,
+          {
+            encoding: "utf-8",
+          },
+        );
         core.info(diff);
 
         // find comment for the `bun.lockb` file
