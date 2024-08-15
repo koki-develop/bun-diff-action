@@ -154,11 +154,10 @@ export const main = async () => {
 
       for (const lockb of lockbs) {
         // fetch before commit
-        const beforeSha = context.payload.before;
-        sh(`git fetch origin ${beforeSha}`);
+        sh(`git fetch --depth=2 origin ${context.sha}`);
 
         // get diff
-        const diff = sh(`git diff ${beforeSha} HEAD -- ${lockb.filename}`);
+        const diff = sh(`git diff HEAD^ HEAD -- ${lockb.filename}`);
         core.startGroup(lockb.filename);
         core.info(diff);
         core.endGroup();

@@ -29365,10 +29365,9 @@ const main = async () => {
                 .join("\n")}`);
             for (const lockb of lockbs) {
                 // fetch before commit
-                const beforeSha = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.payload.before;
-                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git fetch origin ${beforeSha}`);
+                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git fetch --depth=2 origin ${_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha}`);
                 // get diff
-                const diff = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git diff ${beforeSha} HEAD -- ${lockb.filename}`);
+                const diff = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git diff HEAD^ HEAD -- ${lockb.filename}`);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
