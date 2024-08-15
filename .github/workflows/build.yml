@@ -30,6 +30,7 @@ jobs:
         with:
           token: ${{ github.token }}
           title: Build ${{ github.ref_name }}
+          base: ${{ github.event_name == 'push' && 'main' || github.head_ref }}
           branch: build/${{ github.ref_name }}
           commit-message: Build ${{ github.ref_name }}
           body: |
