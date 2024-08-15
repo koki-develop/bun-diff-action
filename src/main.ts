@@ -176,7 +176,11 @@ export const main = async () => {
           await github.updateCommitComment({
             sha: context.sha,
             commentId: comment.id,
-            body: buildDiffComment({ diff, metadata }),
+            body: buildDiffComment({
+              header: `\`${lockb.filename}\``,
+              diff,
+              metadata,
+            }),
           });
           core.debug("Updated.");
         } else {
@@ -185,6 +189,7 @@ export const main = async () => {
           await github.createCommitComment({
             sha: context.sha,
             body: buildDiffComment({
+              header: `\`${lockb.filename}\``,
               diff,
               metadata: { path: lockb.filename },
             }),

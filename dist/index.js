@@ -29108,7 +29108,7 @@ ${params.diff}
 \`\`\`
 
 ${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
-    return params.title ? `## ${params.title}\n\n${base}` : base;
+    return params.header ? `${params.header}\n\n${base}` : base;
 };
 const hasBun = () => {
     try {
@@ -29384,7 +29384,11 @@ const main = async () => {
                     await github.updateCommitComment({
                         sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
                         commentId: comment.id,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({ diff, metadata }),
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
+                            header: `\`${lockb.filename}\``,
+                            diff,
+                            metadata,
+                        }),
                     });
                     _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Updated.");
                 }
@@ -29394,6 +29398,7 @@ const main = async () => {
                     await github.createCommitComment({
                         sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
                         body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
+                            header: `\`${lockb.filename}\``,
                             diff,
                             metadata: { path: lockb.filename },
                         }),

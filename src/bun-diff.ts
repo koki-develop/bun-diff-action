@@ -26,7 +26,7 @@ export const extractMetadata = (comment: Comment): Metadata => {
 };
 
 export const buildDiffComment = (params: {
-  title?: string;
+  header?: string;
   diff: string;
   metadata: Metadata;
 }) => {
@@ -36,7 +36,7 @@ ${params.diff}
 
 ${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
 
-  return params.title ? `## ${params.title}\n\n${base}` : base;
+  return params.header ? `${params.header}\n\n${base}` : base;
 };
 
 export const hasBun = () => {
