@@ -29082,21 +29082,32 @@ function wrappy (fn, cb) {
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "Gc": () => (/* binding */ hasBun),
 /* harmony export */   "YQ": () => (/* binding */ isBunActionComment),
+/* harmony export */   "mU": () => (/* binding */ extractMetadata),
 /* harmony export */   "oq": () => (/* binding */ buildDiffComment)
 /* harmony export */ });
 /* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7718);
 /* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_child_process__WEBPACK_IMPORTED_MODULE_0__);
 
-const _commentSuffix = "<!-- bun-diff-action -->";
+const _metadataPrefix = "<!-- bun-diff-action: ";
+const _metadataSuffix = " -->";
 const isBunActionComment = (comment) => {
-    return comment.body.trim().endsWith(_commentSuffix);
+    const lastLine = comment.body.trim().split("\n").slice(-1)[0];
+    if (!lastLine.startsWith(`${_metadataPrefix}{`))
+        return false;
+    if (!lastLine.endsWith(`}${_metadataSuffix}`))
+        return false;
+    return true;
+};
+const extractMetadata = (comment) => {
+    const lastLine = comment.body.trim().split("\n").slice(-1)[0];
+    return JSON.parse(lastLine.slice(_metadataPrefix.length, -_metadataSuffix.length));
 };
 const buildDiffComment = (params) => {
     const base = `\`\`\`diff
 ${params.diff}
 \`\`\`
 
-${_commentSuffix}`;
+${_metadataPrefix}{${JSON.stringify(params.metadata)}}${_metadataSuffix}`;
     return params.title ? `## ${params.title}\n\n${base}` : base;
 };
 const hasBun = () => {
@@ -29248,10 +29259,8 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 
 
 
-const _supportedEvents = [
-    "pull_request",
-    // TODO: support `push` event
-];
+const _supportedEvents = ["pull_request", "push"];
+// TODO: refactor
 const main = async () => {
     try {
         const inputs = {
@@ -29309,7 +29318,10 @@ const main = async () => {
                     await github.updateReviewComment({
                         num: pullRequest.number,
                         commentId: comment.id,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({ diff }),
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({
+                            diff,
+                            metadata: { path: lockb.filename },
+                        }),
                     });
                     _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Updated.");
                 }
@@ -29319,7 +29331,10 @@ const main = async () => {
                     await github.createReviewComment({
                         num: pullRequest.number,
                         filename: lockb.filename,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({ diff }),
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({
+                            diff,
+                            metadata: { path: lockb.filename },
+                        }),
                         sha: pullRequest.head.sha,
                     });
                     _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Created.");
@@ -29332,6 +29347,74 @@ const main = async () => {
                     _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Deleting comment ${comment.id}...`);
                     await github.deleteReviewComment({
                         num: pullRequest.number,
+                        commentId: comment.id,
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Deleted.");
+                }
+            }
+        }
+        if (_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.eventName === "push") {
+            // find `bun.lockb` files
+            const files = await github.listCommitFiles(_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.sha);
+            const lockbs = files.filter((file) => file.filename.split("/").slice(-1)[0] === "bun.lockb");
+            if (lockbs.length === 0) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.info("No `bun.lockb` file found in the diff.");
+                return;
+            }
+            _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`found bun.lockb files:\n${lockbs
+                .map((lockb) => `* ${lockb.filename}`)
+                .join("\n")}`);
+            // fetch bun-action comments
+            const allComments = await github.listCommitComments(_actions_github__WEBPACK_IMPORTED_MODULE_3__.context.sha);
+            const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .isBunActionComment */ .YQ)(comment));
+            _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`bun-action comments:\n${bunActionComments
+                .map((comment) => `* ${comment.id}`)
+                .join("\n")}`);
+            for (const lockb of lockbs) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.startGroup(lockb.filename);
+                // get diff
+                const diff = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)("", // TODO: get diff
+                { encoding: "utf-8" });
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.info(diff);
+                // find comment for the `bun.lockb` file
+                const comment = bunActionComments.find((comment) => {
+                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .extractMetadata */ .mU)(comment);
+                    return metadata.path === lockb.filename;
+                });
+                if (comment) {
+                    // update comment
+                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Updating comment ${comment.id}...`);
+                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .extractMetadata */ .mU)(comment);
+                    await github.updateCommitComment({
+                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.sha,
+                        commentId: comment.id,
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({ diff, metadata }),
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Updated.");
+                }
+                else {
+                    // create comment
+                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Creating comment...");
+                    await github.createCommitComment({
+                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.sha,
+                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .buildDiffComment */ .oq)({
+                            diff,
+                            metadata: { path: lockb.filename },
+                        }),
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Created.");
+                }
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.endGroup();
+            }
+            // delete old comments
+            for (const comment of bunActionComments) {
+                if (!lockbs.some((lockb) => {
+                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_4__/* .extractMetadata */ .mU)(comment);
+                    return metadata.path === lockb.filename;
+                })) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug(`Deleting comment ${comment.id}...`);
+                    await github.deleteCommitComment({
+                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_3__.context.sha,
                         commentId: comment.id,
                     });
                     _actions_core__WEBPACK_IMPORTED_MODULE_2__.debug("Deleted.");
