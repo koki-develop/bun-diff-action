@@ -1,4 +1,5 @@
 name: CI
+run-name: CI (${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.sha }})
 
 on:
   pull_request:
