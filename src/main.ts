@@ -116,7 +116,16 @@ export const main = async () => {
       }
 
       // delete old comments
-      // TODO: implement
+      for (const comment of bunActionComments) {
+        if (!lockbs.some((lockb) => comment.path === lockb.filename)) {
+          core.debug(`Deleting comment ${comment.id}...`);
+          await github.deletePullRequestComment({
+            num: pullRequest.number,
+            commentId: comment.id,
+          });
+          core.debug("Deleted.");
+        }
+      }
     }
   } catch (error) {
     if (error instanceof Error) {

@@ -71,4 +71,15 @@ export class GitHub {
       body: params.body,
     });
   }
+
+  async deletePullRequestComment(params: {
+    num: number;
+    commentId: number;
+  }): Promise<void> {
+    await this.octokit.rest.pulls.deleteReviewComment({
+      owner: this.config.owner,
+      repo: this.config.repo,
+      comment_id: params.commentId,
+    });
+  }
 }
