@@ -46,6 +46,7 @@ export const main = async () => {
       if (!pullRequest) {
         throw new Error("Failed to get pull request from context.");
       }
+      core.debug(`Pull request: ${JSON.stringify(pullRequest, null, 2)}`);
 
       // find `bun.lockb` files
       const files = await github.listPullRequestFiles(pullRequest.number);
