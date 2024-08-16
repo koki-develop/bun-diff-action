@@ -29289,7 +29289,7 @@ const main = async () => {
                 .map((lockb) => `* ${lockb.filename}`)
                 .join("\n")}`);
             if (lockbs.length === 0) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found.");
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found in changes.");
                 // NOTE: To delete old comments, do not return here
             }
             // fetch bun-action comments
@@ -29363,7 +29363,7 @@ const main = async () => {
                 .map((lockb) => `* ${lockb.filename}`)
                 .join("\n")}`);
             if (lockbs.length === 0) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found.");
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found in changes.");
                 // NOTE: To delete old comments, do not return here
             }
             // fetch bun-action comments

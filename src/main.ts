@@ -49,7 +49,7 @@ export const main = async () => {
           .join("\n")}`,
       );
       if (lockbs.length === 0) {
-        core.info("No bun.lockb files found.");
+        core.info("No bun.lockb files found in changes.");
         // NOTE: To delete old comments, do not return here
       }
 
@@ -137,7 +137,7 @@ export const main = async () => {
           .join("\n")}`,
       );
       if (lockbs.length === 0) {
-        core.info("No bun.lockb files found.");
+        core.info("No bun.lockb files found in changes.");
         // NOTE: To delete old comments, do not return here
       }
 
