@@ -24,7 +24,7 @@ jobs:
 ```
 
 > [!NOTE]
-> If the `Settings` > `Actions` > `General` > `Workflow permissions` setting is not set to `Read and write permissions`, you need to explicitly set the `permissions` setting.
+> If the `Settings` > `Actions` > `General` > `Workflow permissions` setting is not set to `Read and write permissions`, you need to explicitly set the `permissions:` setting.
 > ```yaml
 > permissions:
 >   contents: read
