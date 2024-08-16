@@ -1,4 +1,4 @@
-name: Bun Diff
+name: Bun Diff Action
 description: Add a comment with the diff of the `bun.lockb` to the Pull Request.
 
 branding:
