@@ -17,14 +17,20 @@ on:
 jobs:
   bun-diff:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - uses: koki-develop/bun-diff-action@v1
 ```
+
+> [!NOTE]
+> If the `Settings` > `Actions` > `General` > `Workflow permissions` setting is not set to `Read and write permissions`, you need to explicitly set the `permissions` setting.
+> ```yaml
+> permissions:
+>   contents: read
+>   pull-requests: write # Required to add a comment to a pull request
+> ```
+
 
 ## LICENSE
 
