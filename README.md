@@ -24,8 +24,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - uses: koki-develop/bun-diff-action@v1
-        with:
-          token: ${{ github.token }}
 ```
 
 ## LICENSE
