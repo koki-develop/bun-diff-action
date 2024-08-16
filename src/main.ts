@@ -10,8 +10,6 @@ import {
 import { GitHub } from "./github";
 import { sh } from "./sh";
 
-const _supportedEvents: string[] = ["pull_request", "push"] as const;
-
 // TODO: refactor
 export const main = async () => {
   try {
@@ -23,15 +21,6 @@ export const main = async () => {
       repo: context.repo.repo,
       owner: context.repo.owner,
     });
-
-    core.debug(`Event: ${context.eventName}`);
-    if (!_supportedEvents.includes(context.eventName)) {
-      throw new Error(
-        `Unsupported event: ${event}. This action supports only ${_supportedEvents.join(
-          ", ",
-        )} events.`,
-      );
-    }
 
     if (!hasBun()) throw new Error("bun is not installed.");
 
@@ -132,9 +121,7 @@ export const main = async () => {
           core.debug("Deleted.");
         }
       }
-    }
-
-    if (context.eventName === "push") {
+    } else {
       // find `bun.lockb` files
       const files = await github.listCommitFiles(context.sha);
       const lockbs = files.filter(
