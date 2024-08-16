@@ -29085,8 +29085,7 @@ function wrappy (fn, cb) {
 /* harmony export */   "mU": () => (/* binding */ extractMetadata),
 /* harmony export */   "oq": () => (/* binding */ buildDiffComment)
 /* harmony export */ });
-/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7718);
-/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_child_process__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(8303);
 
 const _metadataPrefix = "<!-- bun-diff-action: ";
 const _metadataSuffix = " -->";
@@ -29112,7 +29111,7 @@ ${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
 };
 const hasBun = () => {
     try {
-        (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)("bun --version", { encoding: "utf-8" });
+        (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["bun", "--version"]);
         return true;
     }
     catch {
@@ -29251,7 +29250,7 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _bun_diff__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(3690);
 /* harmony import */ var _github__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(978);
-/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(2563);
+/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(8303);
 
 
 
@@ -29278,10 +29277,10 @@ const main = async () => {
             throw new Error("bun is not installed.");
         // set git config
         node_fs__WEBPACK_IMPORTED_MODULE_0___default().writeFileSync(".gitattributes", "bun.lockb diff=lockb");
-        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config core.attributesFile .gitattributes");
-        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config diff.lockb.textconv bun");
-        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config diff.lockb.binary true");
-        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)("git config --list");
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "config", "core.attributesFile", ".gitattributes"]);
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "config", "diff.lockb.textconv", "bun"]);
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "config", "diff.lockb.binary", "true"]);
+        (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "config", "--list"]);
         if (_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName === "pull_request") {
             const pullRequest = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.payload.pull_request;
             if (!pullRequest) {
@@ -29302,9 +29301,16 @@ const main = async () => {
                 .join("\n")}`);
             for (const lockb of lockbs) {
                 // fetch base branch
-                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git fetch origin ${pullRequest.base.ref}`);
+                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "fetch", "origin", pullRequest.base.ref]);
                 // get diff
-                const diff = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`);
+                const { stdout: diff } = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)([
+                    "git",
+                    "diff",
+                    `origin/${pullRequest.base.ref}`,
+                    "HEAD",
+                    "--",
+                    lockb.filename,
+                ]);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
@@ -29365,9 +29371,16 @@ const main = async () => {
                 .join("\n")}`);
             for (const lockb of lockbs) {
                 // fetch before commit
-                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git fetch --depth=2 origin ${_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha}`);
+                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "fetch", "--depth=2", "origin", _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha]);
                 // get diff
-                const diff = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(`git diff HEAD^ HEAD -- ${lockb.filename}`);
+                const { stdout: diff } = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)([
+                    "git",
+                    "diff",
+                    "HEAD^",
+                    "HEAD",
+                    "--",
+                    lockb.filename,
+                ]);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
@@ -29437,25 +29450,33 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ 2563:
+/***/ 8303:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "sh": () => (/* binding */ sh)
-/* harmony export */ });
-/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7718);
-/* harmony import */ var node_child_process__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_child_process__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_1__);
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "sh": () => (/* binding */ sh)
+});
+
+;// CONCATENATED MODULE: external "node:child_process"
+const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+;// CONCATENATED MODULE: ./src/sh.ts
 
 
-const sh = (command) => {
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`$ ${command}`);
-    const stdout = (0,node_child_process__WEBPACK_IMPORTED_MODULE_0__.execSync)(command, {
+const sh = (commands) => {
+    core.debug(`$ ${commands.join(" ")}`);
+    const result = (0,external_node_child_process_namespaceObject.spawnSync)(commands[0], commands.slice(1), {
+        shell: true,
         encoding: "utf-8",
     });
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`${stdout}`);
-    return stdout;
+    if (result.status !== 0) {
+        throw new Error(result.stderr);
+    }
+    core.debug(result.stdout);
+    return result;
 };
 
 
@@ -29542,13 +29563,6 @@ module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("https");
 /***/ ((module) => {
 
 module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("net");
-
-/***/ }),
-
-/***/ 7718:
-/***/ ((module) => {
-
-module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
 
 /***/ }),
 
