@@ -48,6 +48,10 @@ export const main = async () => {
           .map((lockb) => `* ${lockb.filename}`)
           .join("\n")}`,
       );
+      if (lockbs.length === 0) {
+        core.info("No bun.lockb files found.");
+        // NOTE: To delete old comments, do not return here
+      }
 
       // fetch bun-action comments
       const allComments = await github.listReviewComments(pullRequest.number);
@@ -132,6 +136,10 @@ export const main = async () => {
           .map((lockb) => `* ${lockb.filename}`)
           .join("\n")}`,
       );
+      if (lockbs.length === 0) {
+        core.info("No bun.lockb files found.");
+        // NOTE: To delete old comments, do not return here
+      }
 
       // fetch bun-action comments
       const allComments = await github.listCommitComments(context.sha);

@@ -29288,6 +29288,10 @@ const main = async () => {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`found bun.lockb files:\n${lockbs
                 .map((lockb) => `* ${lockb.filename}`)
                 .join("\n")}`);
+            if (lockbs.length === 0) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found.");
+                // NOTE: To delete old comments, do not return here
+            }
             // fetch bun-action comments
             const allComments = await github.listReviewComments(pullRequest.number);
             const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .isBunActionComment */ .YQ)(comment));
@@ -29358,6 +29362,10 @@ const main = async () => {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`found bun.lockb files:\n${lockbs
                 .map((lockb) => `* ${lockb.filename}`)
                 .join("\n")}`);
+            if (lockbs.length === 0) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found.");
+                // NOTE: To delete old comments, do not return here
+            }
             // fetch bun-action comments
             const allComments = await github.listCommitComments(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha);
             const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .isBunActionComment */ .YQ)(comment));
