@@ -29257,7 +29257,6 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 
 
 
-const _supportedEvents = ["pull_request", "push"];
 // TODO: refactor
 const main = async () => {
     try {
@@ -29269,10 +29268,6 @@ const main = async () => {
             repo: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.repo,
             owner: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.owner,
         });
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Event: ${_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName}`);
-        if (!_supportedEvents.includes(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName)) {
-            throw new Error(`Unsupported event: ${event}. This action supports only ${_supportedEvents.join(", ")} events.`);
-        }
         if (!(0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .hasBun */ .Gc)())
             throw new Error("bun is not installed.");
         // set git config
@@ -29356,7 +29351,7 @@ const main = async () => {
                 }
             }
         }
-        if (_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName === "push") {
+        else {
             // find `bun.lockb` files
             const files = await github.listCommitFiles(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha);
             const lockbs = files.filter((file) => file.filename.split("/").slice(-1)[0] === "bun.lockb");
