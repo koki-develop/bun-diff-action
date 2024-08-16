@@ -4,7 +4,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/koki-develop/bun-diff-action/ci.yml?branch=main&logo=github&style=flat&label=ci)](https://github.com/koki-develop/bun-diff-action/actions/workflows/ci.yml)
 [![Build](https://img.shields.io/github/actions/workflow/status/koki-develop/bun-diff-action/build.yml?branch=main&logo=github&style=flat&label=build)](https://github.com/koki-develop/bun-diff-action/actions/workflows/build.yml)
 
-Show diff of `bun.lockb` in Pull Request.
+Show diff of `bun.lockb` on Pull Request.
 
 ![](./assets/screenshot.png)
 
