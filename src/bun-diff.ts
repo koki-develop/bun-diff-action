@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { sh } from "./sh";
 
 export interface Comment {
   body: string;
@@ -41,7 +41,7 @@ ${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
 
 export const hasBun = () => {
   try {
-    execSync("bun --version", { encoding: "utf-8" });
+    sh(["bun", "--version"]);
     return true;
   } catch {
     return false;

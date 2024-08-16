@@ -37,10 +37,10 @@ export const main = async () => {
 
     // set git config
     fs.writeFileSync(".gitattributes", "bun.lockb diff=lockb");
-    sh("git config core.attributesFile .gitattributes");
-    sh("git config diff.lockb.textconv bun");
-    sh("git config diff.lockb.binary true");
-    sh("git config --list");
+    sh(["git", "config", "core.attributesFile", ".gitattributes"]);
+    sh(["git", "config", "diff.lockb.textconv", "bun"]);
+    sh(["git", "config", "diff.lockb.binary", "true"]);
+    sh(["git", "config", "--list"]);
 
     if (context.eventName === "pull_request") {
       const pullRequest = context.payload.pull_request;
@@ -73,12 +73,17 @@ export const main = async () => {
 
       for (const lockb of lockbs) {
         // fetch base branch
-        sh(`git fetch origin ${pullRequest.base.ref}`);
+        sh(["git", "fetch", "origin", pullRequest.base.ref]);
 
         // get diff
-        const diff = sh(
-          `git diff origin/${pullRequest.base.ref} HEAD -- ${lockb.filename}`,
-        );
+        const { stdout: diff } = sh([
+          "git",
+          "diff",
+          `origin/${pullRequest.base.ref}`,
+          "HEAD",
+          "--",
+          lockb.filename,
+        ]);
         core.startGroup(lockb.filename);
         core.info(diff);
         core.endGroup();
@@ -154,10 +159,17 @@ export const main = async () => {
 
       for (const lockb of lockbs) {
         // fetch before commit
-        sh(`git fetch --depth=2 origin ${context.sha}`);
+        sh(["git", "fetch", "--depth=2", "origin", context.sha]);
 
         // get diff
-        const diff = sh(`git diff HEAD^ HEAD -- ${lockb.filename}`);
+        const { stdout: diff } = sh([
+          "git",
+          "diff",
+          "HEAD^",
+          "HEAD",
+          "--",
+          lockb.filename,
+        ]);
         core.startGroup(lockb.filename);
         core.info(diff);
         core.endGroup();
