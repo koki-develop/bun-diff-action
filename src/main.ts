@@ -2,15 +2,15 @@ import fs from "node:fs";
 import * as core from "@actions/core";
 import { context } from "@actions/github";
 import {
-  buildDiffComment,
+  type Action,
+  CommitAction,
+  PullRequestAction,
   extractMetadata,
   hasBun,
-  isBunActionComment,
-} from "./bun-diff";
-import { GitHub } from "./github";
+} from "./action";
+import { GitHub, type PullRequest } from "./github";
 import { sh } from "./sh";
 
-// TODO: refactor
 export const main = async () => {
   try {
     const inputs = {
@@ -31,194 +31,64 @@ export const main = async () => {
     sh(["git", "config", "diff.lockb.binary", "true"]);
     sh(["git", "config", "--list"]);
 
-    if (context.eventName === "pull_request") {
-      const pullRequest = context.payload.pull_request;
-      if (!pullRequest) {
-        throw new Error("Failed to get pull request from context.");
-      }
-      core.debug(`Pull request: ${JSON.stringify(pullRequest, null, 2)}`);
-
-      // find `bun.lockb` files
-      const files = await github.listPullRequestFiles(pullRequest.number);
-      const lockbs = files.filter(
-        (file) => file.filename.split("/").slice(-1)[0] === "bun.lockb",
-      );
-      core.debug(
-        `found bun.lockb files:\n${lockbs
-          .map((lockb) => `* ${lockb.filename}`)
-          .join("\n")}`,
-      );
-      if (lockbs.length === 0) {
-        core.info("No bun.lockb files found in changes.");
-        // NOTE: To delete old comments, do not return here
-      }
-
-      // fetch bun-action comments
-      const allComments = await github.listReviewComments(pullRequest.number);
-      const bunActionComments = allComments.filter((comment) =>
-        isBunActionComment(comment),
-      );
-      core.debug(
-        `bun-action comments:\n${bunActionComments
-          .map((comment) => `* ${comment.id}`)
-          .join("\n")}`,
-      );
-
-      for (const lockb of lockbs) {
-        // fetch base branch
-        sh(["git", "fetch", "origin", pullRequest.base.ref]);
-
-        // get diff
-        const { stdout: diff } = sh([
-          "git",
-          "diff",
-          `origin/${pullRequest.base.ref}`,
-          "HEAD",
-          "--",
-          lockb.filename,
-        ]);
-        core.startGroup(lockb.filename);
-        core.info(diff);
-        core.endGroup();
-
-        // find comment for the `bun.lockb` file
-        const comment = bunActionComments.find(
-          (comment) => comment.path === lockb.filename,
-        );
-
-        if (comment) {
-          // update comment
-          core.debug(`Updating comment ${comment.id}...`);
-          await github.updateReviewComment({
-            num: pullRequest.number,
-            commentId: comment.id,
-            body: buildDiffComment({
-              diff,
-              metadata: { path: lockb.filename },
-            }),
-          });
-          core.debug("Updated.");
-        } else {
-          // create comment
-          core.debug("Creating comment...");
-          await github.createReviewComment({
-            num: pullRequest.number,
-            filename: lockb.filename,
-            body: buildDiffComment({
-              diff,
-              metadata: { path: lockb.filename },
-            }),
-            sha: pullRequest.head.sha,
-          });
-          core.debug("Created.");
+    const action: Action = (() => {
+      if (context.eventName === "pull_request") {
+        const pullRequest = context.payload.pull_request as PullRequest;
+        if (!pullRequest) {
+          throw new Error("Failed to get pull request from context.");
         }
+        core.debug(`Pull request: ${JSON.stringify(pullRequest, null, 2)}`);
+        return new PullRequestAction({ github, pullRequest });
       }
 
-      // delete old comments
-      for (const comment of bunActionComments) {
-        if (!lockbs.some((lockb) => comment.path === lockb.filename)) {
-          core.debug(`Deleting comment ${comment.id}...`);
-          await github.deleteReviewComment({
-            num: pullRequest.number,
-            commentId: comment.id,
-          });
-          core.debug("Deleted.");
-        }
+      return new CommitAction({ github, sha: context.sha });
+    })();
+
+    const lockbs = await action.listLockbFiles();
+    core.debug(
+      `Found bun.lockb files:\n${lockbs
+        .map((lockb) => `* ${lockb}`)
+        .join("\n")}`,
+    );
+    if (lockbs.length === 0) {
+      core.info("No bun.lockb files found in changes.");
+      // NOTE: To delete old comments, do not return here
+    }
+
+    const comments = await action.listComments();
+    core.debug(
+      `Existing comments:\n${comments
+        .map((comment) => `* ${comment.id}`)
+        .join("\n")}`,
+    );
+
+    for (const lockb of lockbs) {
+      const diff = await action.getDiff(lockb);
+      core.startGroup(lockb);
+      core.info(diff);
+      core.endGroup();
+
+      const comment = comments.find((comment) => {
+        const metadata = extractMetadata(comment);
+        return metadata.path === lockb;
+      });
+      if (comment) {
+        core.debug(`Updating comment ${comment.id}...`);
+        await action.updateComment({ comment, diff, filename: lockb });
+        core.debug("Updated.");
+      } else {
+        core.debug("Creating comment...");
+        await action.createComment({ diff, filename: lockb });
+        core.debug("Created.");
       }
-    } else {
-      // find `bun.lockb` files
-      const files = await github.listCommitFiles(context.sha);
-      const lockbs = files.filter(
-        (file) => file.filename.split("/").slice(-1)[0] === "bun.lockb",
-      );
-      core.debug(
-        `found bun.lockb files:\n${lockbs
-          .map((lockb) => `* ${lockb.filename}`)
-          .join("\n")}`,
-      );
-      if (lockbs.length === 0) {
-        core.info("No bun.lockb files found in changes.");
-        // NOTE: To delete old comments, do not return here
-      }
+    }
 
-      // fetch bun-action comments
-      const allComments = await github.listCommitComments(context.sha);
-      const bunActionComments = allComments.filter((comment) =>
-        isBunActionComment(comment),
-      );
-      core.debug(
-        `bun-action comments:\n${bunActionComments
-          .map((comment) => `* ${comment.id}`)
-          .join("\n")}`,
-      );
-
-      for (const lockb of lockbs) {
-        // fetch before commit
-        sh(["git", "fetch", "--depth=2", "origin", context.sha]);
-
-        // get diff
-        const { stdout: diff } = sh([
-          "git",
-          "diff",
-          "HEAD^",
-          "HEAD",
-          "--",
-          lockb.filename,
-        ]);
-        core.startGroup(lockb.filename);
-        core.info(diff);
-        core.endGroup();
-
-        // find comment for the `bun.lockb` file
-        const comment = bunActionComments.find((comment) => {
-          const metadata = extractMetadata(comment);
-          return metadata.path === lockb.filename;
-        });
-
-        if (comment) {
-          // update comment
-          core.debug(`Updating comment ${comment.id}...`);
-          const metadata = extractMetadata(comment);
-          await github.updateCommitComment({
-            sha: context.sha,
-            commentId: comment.id,
-            body: buildDiffComment({
-              header: `\`${lockb.filename}\``,
-              diff,
-              metadata,
-            }),
-          });
-          core.debug("Updated.");
-        } else {
-          // create comment
-          core.debug("Creating comment...");
-          await github.createCommitComment({
-            sha: context.sha,
-            body: buildDiffComment({
-              header: `\`${lockb.filename}\``,
-              diff,
-              metadata: { path: lockb.filename },
-            }),
-          });
-          core.debug("Created.");
-        }
-      }
-
-      // delete old comments
-      for (const comment of bunActionComments) {
-        if (
-          !lockbs.some((lockb) => {
-            const metadata = extractMetadata(comment);
-            return metadata.path === lockb.filename;
-          })
-        ) {
-          core.debug(`Deleting comment ${comment.id}...`);
-          await github.deleteCommitComment({
-            sha: context.sha,
-            commentId: comment.id,
-          });
-          core.debug("Deleted.");
-        }
+    for (const comment of comments) {
+      const metadata = extractMetadata(comment);
+      if (!lockbs.some((lockb) => metadata.path === lockb)) {
+        core.debug(`Deleting comment ${comment.id}...`);
+        await action.deleteComment(comment);
+        core.debug("Deleted.");
       }
     }
   } catch (error) {

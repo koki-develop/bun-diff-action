@@ -6,6 +6,16 @@ export type Config = {
   owner: string;
 };
 
+export interface PullRequest {
+  number: number;
+  base: {
+    ref: string;
+  };
+  head: {
+    sha: string;
+  };
+}
+
 export class GitHub {
   private readonly octokit: ReturnType<typeof getOctokit>;
 

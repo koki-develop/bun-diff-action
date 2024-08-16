@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isBunActionComment } from "./bun-diff";
+import { _isBunActionComment } from "./action";
 
 describe("isBunActionComment", () => {
   test.each([
@@ -9,6 +9,6 @@ describe("isBunActionComment", () => {
     ["foo<!-- bun-diff-action: {} -->\n", false],
     ["foo", false],
   ])("should return %s", (body, expected) => {
-    expect(isBunActionComment({ body })).toBe(expected);
+    expect(_isBunActionComment({ body, path: "", id: 1 })).toBe(expected);
   });
 });
