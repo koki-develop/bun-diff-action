@@ -1,10 +1,10 @@
-# bun-diff-action
+# Bun Diff Action
 
 [![GitHub Release](https://img.shields.io/github/v/release/koki-develop/bun-diff-action)](https://github.com/koki-develop/bun-diff-action/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/koki-develop/bun-diff-action/ci.yml?branch=main&logo=github&style=flat&label=ci)](https://github.com/koki-develop/bun-diff-action/actions/workflows/ci.yml)
 [![Build](https://img.shields.io/github/actions/workflow/status/koki-develop/bun-diff-action/build.yml?branch=main&logo=github&style=flat&label=build)](https://github.com/koki-develop/bun-diff-action/actions/workflows/build.yml)
 
-Create a comment with the diff of the `bun.lockb` file.
+Add a comment with the diff of the `bun.lockb` to the Pull Request.
 
 ![](./assets/screenshot.png)
 

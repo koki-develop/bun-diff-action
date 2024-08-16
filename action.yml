@@ -1,5 +1,5 @@
 name: Bun Diff
-description: Create a comment with the diff of the `bun.lockb` file.
+description: Add a comment with the diff of the `bun.lockb` to the Pull Request.
 
 branding:
   icon: file-plus
