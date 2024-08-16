@@ -29076,38 +29076,27 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 3690:
+/***/ 7672:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "Gc": () => (/* binding */ hasBun),
-/* harmony export */   "YQ": () => (/* binding */ isBunActionComment),
+/* harmony export */   "Ue": () => (/* binding */ PullRequestAction),
 /* harmony export */   "mU": () => (/* binding */ extractMetadata),
-/* harmony export */   "oq": () => (/* binding */ buildDiffComment)
+/* harmony export */   "nu": () => (/* binding */ CommitAction)
 /* harmony export */ });
+/* unused harmony exports _isBunActionComment, _buildDiffComment, _isLockbFile */
 /* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(8303);
 
 const _metadataPrefix = "<!-- bun-diff-action: ";
 const _metadataSuffix = " -->";
-const isBunActionComment = (comment) => {
-    const lastLine = comment.body.trim().split("\n").slice(-1)[0];
-    if (!lastLine.startsWith(`${_metadataPrefix}{`))
-        return false;
-    if (!lastLine.endsWith(`}${_metadataSuffix}`))
-        return false;
-    return true;
-};
 const extractMetadata = (comment) => {
     const lastLine = comment.body.trim().split("\n").slice(-1)[0];
-    return JSON.parse(lastLine.slice(_metadataPrefix.length, -_metadataSuffix.length));
-};
-const buildDiffComment = (params) => {
-    const base = `\`\`\`diff
-${params.diff}
-\`\`\`
-
-${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
-    return params.header ? `${params.header}\n\n${base}` : base;
+    const metadata = JSON.parse(lastLine.slice(_metadataPrefix.length, -_metadataSuffix.length));
+    return {
+        ...metadata,
+        path: comment.path ?? metadata.path,
+    };
 };
 const hasBun = () => {
     try {
@@ -29117,6 +29106,137 @@ const hasBun = () => {
     catch {
         return false;
     }
+};
+class PullRequestAction {
+    github;
+    pullRequest;
+    constructor(config) {
+        this.github = config.github;
+        this.pullRequest = config.pullRequest;
+    }
+    async listLockbFiles() {
+        const files = await this.github.listPullRequestFiles(this.pullRequest.number);
+        return files.map((file) => file.filename).filter(_isLockbFile);
+    }
+    async listComments() {
+        const comments = await this.github.listReviewComments(this.pullRequest.number);
+        return comments.filter(_isBunActionComment).map((comment) => ({
+            id: comment.id,
+            body: comment.body,
+            path: comment.path,
+        }));
+    }
+    async createComment({ diff, filename }) {
+        await this.github.createReviewComment({
+            num: this.pullRequest.number,
+            filename,
+            body: _buildDiffComment({
+                diff,
+                metadata: { path: filename },
+            }),
+            sha: this.pullRequest.head.sha,
+        });
+    }
+    async updateComment({ comment, diff, filename, }) {
+        await this.github.updateReviewComment({
+            num: this.pullRequest.number,
+            commentId: comment.id,
+            body: _buildDiffComment({
+                diff,
+                metadata: { path: filename },
+            }),
+        });
+    }
+    async deleteComment(comment) {
+        await this.github.deleteReviewComment({
+            num: this.pullRequest.number,
+            commentId: comment.id,
+        });
+    }
+    async getDiff(path) {
+        (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "origin", this.pullRequest.base.ref]);
+        const { stdout } = (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)([
+            "git",
+            "diff",
+            `origin/${this.pullRequest.base.ref}`,
+            "HEAD",
+            "--",
+            path,
+        ]);
+        return stdout;
+    }
+}
+class CommitAction {
+    github;
+    sha;
+    constructor(config) {
+        this.github = config.github;
+        this.sha = config.sha;
+    }
+    async listLockbFiles() {
+        const files = await this.github.listCommitFiles(this.sha);
+        return files.map((file) => file.filename).filter(_isLockbFile);
+    }
+    async listComments() {
+        const comments = await this.github.listCommitComments(this.sha);
+        return comments.filter(_isBunActionComment).map((comment) => ({
+            id: comment.id,
+            body: comment.body,
+            path: comment.path,
+        }));
+    }
+    async createComment({ diff, filename }) {
+        await this.github.createCommitComment({
+            sha: this.sha,
+            body: _buildDiffComment({
+                header: `\`${filename}\``,
+                diff,
+                metadata: { path: filename },
+            }),
+        });
+    }
+    async updateComment({ comment, diff, filename, }) {
+        const metadata = extractMetadata(comment);
+        await this.github.updateCommitComment({
+            sha: this.sha,
+            commentId: comment.id,
+            body: _buildDiffComment({
+                header: `\`${filename}\``,
+                diff,
+                metadata,
+            }),
+        });
+    }
+    async deleteComment(comment) {
+        await this.github.deleteCommitComment({
+            sha: this.sha,
+            commentId: comment.id,
+        });
+    }
+    async getDiff(path) {
+        (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "--depth=2", "origin", this.sha]);
+        const { stdout } = (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "diff", "HEAD^", "HEAD", "--", path]);
+        return stdout;
+    }
+}
+const _isBunActionComment = (comment) => {
+    const lastLine = comment.body.trim().split("\n").slice(-1)[0];
+    if (!lastLine.startsWith(`${_metadataPrefix}{`))
+        return false;
+    if (!lastLine.endsWith(`}${_metadataSuffix}`))
+        return false;
+    return true;
+};
+const _buildDiffComment = (params) => {
+    const base = `\`\`\`diff
+${params.diff}
+\`\`\`
+
+${_metadataPrefix}${JSON.stringify(params.metadata)}${_metadataSuffix}`;
+    return params.header ? `${params.header}\n\n${base}` : base;
+};
+const _isLockbFile = (filename) => {
+    return filename.split("/").slice(-1)[0] === "bun.lockb";
 };
 
 
@@ -29248,7 +29368,7 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(5438);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _bun_diff__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(3690);
+/* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(7672);
 /* harmony import */ var _github__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(978);
 /* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(8303);
 
@@ -29257,7 +29377,6 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 
 
 
-// TODO: refactor
 const main = async () => {
     try {
         const inputs = {
@@ -29268,7 +29387,7 @@ const main = async () => {
             repo: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.repo,
             owner: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.owner,
         });
-        if (!(0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .hasBun */ .Gc)())
+        if (!(0,_action__WEBPACK_IMPORTED_MODULE_3__/* .hasBun */ .Gc)())
             throw new Error("bun is not installed.");
         // set git config
         node_fs__WEBPACK_IMPORTED_MODULE_0___default().writeFileSync(".gitattributes", "bun.lockb diff=lockb");
@@ -29276,164 +29395,55 @@ const main = async () => {
         (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "config", "diff.lockb.textconv", "bun"]);
         (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "config", "diff.lockb.binary", "true"]);
         (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "config", "--list"]);
-        if (_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName === "pull_request") {
-            const pullRequest = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.payload.pull_request;
-            if (!pullRequest) {
-                throw new Error("Failed to get pull request from context.");
-            }
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Pull request: ${JSON.stringify(pullRequest, null, 2)}`);
-            // find `bun.lockb` files
-            const files = await github.listPullRequestFiles(pullRequest.number);
-            const lockbs = files.filter((file) => file.filename.split("/").slice(-1)[0] === "bun.lockb");
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`found bun.lockb files:\n${lockbs
-                .map((lockb) => `* ${lockb.filename}`)
-                .join("\n")}`);
-            if (lockbs.length === 0) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found in changes.");
-                // NOTE: To delete old comments, do not return here
-            }
-            // fetch bun-action comments
-            const allComments = await github.listReviewComments(pullRequest.number);
-            const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .isBunActionComment */ .YQ)(comment));
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`bun-action comments:\n${bunActionComments
-                .map((comment) => `* ${comment.id}`)
-                .join("\n")}`);
-            for (const lockb of lockbs) {
-                // fetch base branch
-                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "fetch", "origin", pullRequest.base.ref]);
-                // get diff
-                const { stdout: diff } = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)([
-                    "git",
-                    "diff",
-                    `origin/${pullRequest.base.ref}`,
-                    "HEAD",
-                    "--",
-                    lockb.filename,
-                ]);
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
-                // find comment for the `bun.lockb` file
-                const comment = bunActionComments.find((comment) => comment.path === lockb.filename);
-                if (comment) {
-                    // update comment
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Updating comment ${comment.id}...`);
-                    await github.updateReviewComment({
-                        num: pullRequest.number,
-                        commentId: comment.id,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
-                            diff,
-                            metadata: { path: lockb.filename },
-                        }),
-                    });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Updated.");
+        const action = (() => {
+            if (_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName === "pull_request") {
+                const pullRequest = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.payload.pull_request;
+                if (!pullRequest) {
+                    throw new Error("Failed to get pull request from context.");
                 }
-                else {
-                    // create comment
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Creating comment...");
-                    await github.createReviewComment({
-                        num: pullRequest.number,
-                        filename: lockb.filename,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
-                            diff,
-                            metadata: { path: lockb.filename },
-                        }),
-                        sha: pullRequest.head.sha,
-                    });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Created.");
-                }
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Pull request: ${JSON.stringify(pullRequest, null, 2)}`);
+                return new _action__WEBPACK_IMPORTED_MODULE_3__/* .PullRequestAction */ .Ue({ github, pullRequest });
             }
-            // delete old comments
-            for (const comment of bunActionComments) {
-                if (!lockbs.some((lockb) => comment.path === lockb.filename)) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Deleting comment ${comment.id}...`);
-                    await github.deleteReviewComment({
-                        num: pullRequest.number,
-                        commentId: comment.id,
-                    });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Deleted.");
-                }
+            return new _action__WEBPACK_IMPORTED_MODULE_3__/* .CommitAction */ .nu({ github, sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha });
+        })();
+        const lockbs = await action.listLockbFiles();
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Found bun.lockb files:\n${lockbs
+            .map((lockb) => `* ${lockb}`)
+            .join("\n")}`);
+        if (lockbs.length === 0) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found in changes.");
+            // NOTE: To delete old comments, do not return here
+        }
+        const comments = await action.listComments();
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Existing comments:\n${comments
+            .map((comment) => `* ${comment.id}`)
+            .join("\n")}`);
+        for (const lockb of lockbs) {
+            const diff = await action.getDiff(lockb);
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb);
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+            const comment = comments.find((comment) => {
+                const metadata = (0,_action__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
+                return metadata.path === lockb;
+            });
+            if (comment) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Updating comment ${comment.id}...`);
+                await action.updateComment({ comment, diff, filename: lockb });
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Updated.");
+            }
+            else {
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Creating comment...");
+                await action.createComment({ diff, filename: lockb });
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Created.");
             }
         }
-        else {
-            // find `bun.lockb` files
-            const files = await github.listCommitFiles(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha);
-            const lockbs = files.filter((file) => file.filename.split("/").slice(-1)[0] === "bun.lockb");
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`found bun.lockb files:\n${lockbs
-                .map((lockb) => `* ${lockb.filename}`)
-                .join("\n")}`);
-            if (lockbs.length === 0) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No bun.lockb files found in changes.");
-                // NOTE: To delete old comments, do not return here
-            }
-            // fetch bun-action comments
-            const allComments = await github.listCommitComments(_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha);
-            const bunActionComments = allComments.filter((comment) => (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .isBunActionComment */ .YQ)(comment));
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`bun-action comments:\n${bunActionComments
-                .map((comment) => `* ${comment.id}`)
-                .join("\n")}`);
-            for (const lockb of lockbs) {
-                // fetch before commit
-                (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)(["git", "fetch", "--depth=2", "origin", _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha]);
-                // get diff
-                const { stdout: diff } = (0,_sh__WEBPACK_IMPORTED_MODULE_5__.sh)([
-                    "git",
-                    "diff",
-                    "HEAD^",
-                    "HEAD",
-                    "--",
-                    lockb.filename,
-                ]);
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(diff);
-                _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
-                // find comment for the `bun.lockb` file
-                const comment = bunActionComments.find((comment) => {
-                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
-                    return metadata.path === lockb.filename;
-                });
-                if (comment) {
-                    // update comment
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Updating comment ${comment.id}...`);
-                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
-                    await github.updateCommitComment({
-                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
-                        commentId: comment.id,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
-                            header: `\`${lockb.filename}\``,
-                            diff,
-                            metadata,
-                        }),
-                    });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Updated.");
-                }
-                else {
-                    // create comment
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Creating comment...");
-                    await github.createCommitComment({
-                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
-                        body: (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .buildDiffComment */ .oq)({
-                            header: `\`${lockb.filename}\``,
-                            diff,
-                            metadata: { path: lockb.filename },
-                        }),
-                    });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Created.");
-                }
-            }
-            // delete old comments
-            for (const comment of bunActionComments) {
-                if (!lockbs.some((lockb) => {
-                    const metadata = (0,_bun_diff__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
-                    return metadata.path === lockb.filename;
-                })) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Deleting comment ${comment.id}...`);
-                    await github.deleteCommitComment({
-                        sha: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.sha,
-                        commentId: comment.id,
-                    });
-                    _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Deleted.");
-                }
+        for (const comment of comments) {
+            const metadata = (0,_action__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
+            if (!lockbs.some((lockb) => metadata.path === lockb)) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Deleting comment ${comment.id}...`);
+                await action.deleteComment(comment);
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Deleted.");
             }
         }
     }
