@@ -33373,9 +33373,11 @@ const main = async () => {
             // NOTE: To delete old comments, do not return here
         }
         const comments = await action.listComments();
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Existing comments:\n${comments
-            .map((comment) => `* ${comment.id}`)
-            .join("\n")}`);
+        if (comments.length > 0) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Existing comments:\n${comments
+                .map((comment) => `* ${comment.id}`)
+                .join("\n")}`);
+        }
         if (lockbs.length > 0) {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("Diffs:");
         }
@@ -33430,15 +33432,18 @@ __webpack_async_result__();
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "sh": () => (/* binding */ sh)
 /* harmony export */ });
-/* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(1514);
-/* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_exec__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(1514);
+/* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_exec__WEBPACK_IMPORTED_MODULE_1__);
+
 
 const sh = async (commands) => {
     let stdout = "";
     let stderr = "";
-    const code = await _actions_exec__WEBPACK_IMPORTED_MODULE_0__.exec(commands[0], commands.slice(1), {
+    const code = await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec(commands[0], commands.slice(1), {
         ignoreReturnCode: true,
-        silent: true,
+        silent: !_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug(),
         listeners: {
             stdout: (data) => {
                 stdout += data.toString();
