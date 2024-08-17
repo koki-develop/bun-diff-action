@@ -180,4 +180,13 @@ export class GitHub {
       },
     );
   }
+
+  /** @see https://docs.github.com/ja/rest/releases/releases?apiVersion=2022-11-28#get-the-latest-release */
+  async fetchLatestRelease(params: { owner: string; repo: string }) {
+    const { data } = await this.octokit.request(
+      "GET /repos/{owner}/{repo}/releases/latest",
+      params,
+    );
+    return data;
+  }
 }
