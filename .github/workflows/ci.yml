@@ -21,6 +21,7 @@ jobs:
       - run: bun run lint
 
   run-action:
+    name: Run action on ${{ matrix.runner }} with preinstall-bun=${{ matrix.preinstall-bun }}
     needs:
       - test
       - lint
@@ -31,10 +32,15 @@ jobs:
           - macos-13 # intel
           - macos-latest # m1
           - windows-latest
+        preinstall-bun:
+          - true
+          - false
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: write # Required to comment on the commit
       pull-requests: write # Required to comment on the Pull Request
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        if: ${{ matrix.preinstall-bun }}
       - uses: ./
