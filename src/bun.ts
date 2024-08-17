@@ -22,7 +22,7 @@ export class BunInstaller {
     }
 
     const url = this._getDownloadUrl(canonicalVersion);
-    core.debug(`Downloading from ${url}...`);
+    core.debug(`Downloading from ${url}`);
 
     const path = await tc.downloadTool(url);
     core.debug(`Downloaded to ${path}`);
