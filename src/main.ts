@@ -84,6 +84,11 @@ export const main = async () => {
     for (const lockb of lockbs) {
       const diff = await action.getDiff(lockb);
       core.startGroup(lockb);
+      if (diff.trim() === "") {
+        core.info("No changes.");
+        core.endGroup();
+        continue;
+      }
       core.info(diff);
       core.endGroup();
 
