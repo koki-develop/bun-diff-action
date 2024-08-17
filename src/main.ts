@@ -6,7 +6,6 @@ import {
   CommitAction,
   PullRequestAction,
   extractMetadata,
-  hasBun,
 } from "./action";
 import { BunInstaller } from "./bun";
 import { GitHub, type PullRequest } from "./github";
@@ -24,12 +23,13 @@ export const main = async () => {
       owner: context.repo.owner,
     });
 
-    if (hasBun() && inputs.bunVersion) {
+    const installer = new BunInstaller(github);
+    const alreadyInstalled = await installer.installed();
+    if (alreadyInstalled && inputs.bunVersion) {
       core.warning(
         "`bun-version` is specified but bun is already installed. Skipping installation.",
       );
     } else {
-      const installer = new BunInstaller(github);
       const version = inputs.bunVersion ?? "latest";
       core.info("Installing bun...");
       const installedVersion = await installer.install(version);
@@ -38,10 +38,10 @@ export const main = async () => {
 
     // set git config
     fs.writeFileSync(".gitattributes", "bun.lockb diff=lockb");
-    sh(["git", "config", "core.attributesFile", ".gitattributes"]);
-    sh(["git", "config", "diff.lockb.textconv", "bun"]);
-    sh(["git", "config", "diff.lockb.binary", "true"]);
-    sh(["git", "config", "--list"]);
+    await sh(["git", "config", "core.attributesFile", ".gitattributes"]);
+    await sh(["git", "config", "diff.lockb.textconv", "bun"]);
+    await sh(["git", "config", "diff.lockb.binary", "true"]);
+    await sh(["git", "config", "--list"]);
 
     const action: Action = (() => {
       if (context.eventName === "pull_request") {

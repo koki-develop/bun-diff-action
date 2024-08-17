@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import type { GitHub } from "./github";
+import { sh } from "./sh";
 
 const _owner = "oven-sh";
 const _repo = "bun";
@@ -36,6 +37,15 @@ export class BunInstaller {
     core.addPath(binPath);
 
     return canonicalVersion;
+  }
+
+  async installed(): Promise<boolean> {
+    try {
+      await sh(["bun", "--version"]);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private _getDownloadUrl(version: string): string {

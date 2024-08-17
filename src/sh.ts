@@ -1,16 +1,24 @@
-import { spawnSync } from "node:child_process";
-import * as core from "@actions/core";
+import * as exec from "@actions/exec";
 
-export const sh = (commands: string[]) => {
-  core.debug(`$ ${commands.join(" ")}`);
-  const result = spawnSync(commands[0], commands.slice(1), {
-    shell: true,
-    encoding: "utf-8",
+export const sh = async (commands: string[]) => {
+  let stdout = "";
+  let stderr = "";
+
+  const code = await exec.exec(commands[0], commands.slice(1), {
+    ignoreReturnCode: true,
+    silent: true,
+    listeners: {
+      stdout: (data) => {
+        stdout += data.toString();
+      },
+      stderr: (data) => {
+        stderr += data.toString();
+      },
+    },
   });
-  if (result.status !== 0) {
-    throw new Error(result.stderr);
+  if (code !== 0) {
+    throw new Error(stderr);
   }
 
-  core.debug(result.stdout);
-  return result;
+  return stdout;
 };

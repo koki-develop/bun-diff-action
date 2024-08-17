@@ -32935,13 +32935,12 @@ function wrappy (fn, cb) {
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "Gc": () => (/* binding */ hasBun),
 /* harmony export */   "Ue": () => (/* binding */ PullRequestAction),
 /* harmony export */   "mU": () => (/* binding */ extractMetadata),
 /* harmony export */   "nu": () => (/* binding */ CommitAction)
 /* harmony export */ });
 /* unused harmony exports _isBunActionComment, _buildDiffComment, _isLockbFile */
-/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(8303);
+/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2563);
 
 const _metadataPrefix = "<!-- bun-diff-action: ";
 const _metadataSuffix = " -->";
@@ -32952,15 +32951,6 @@ const extractMetadata = (comment) => {
         ...metadata,
         path: comment.path ?? metadata.path,
     };
-};
-const hasBun = () => {
-    try {
-        (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["bun", "--version"]);
-        return true;
-    }
-    catch {
-        return false;
-    }
 };
 class PullRequestAction {
     github;
@@ -33009,8 +32999,8 @@ class PullRequestAction {
         });
     }
     async getDiff(path) {
-        (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "origin", this.pullRequest.base.ref]);
-        const { stdout } = (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)([
+        await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "origin", this.pullRequest.base.ref]);
+        const stdout = await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)([
             "git",
             "diff",
             `origin/${this.pullRequest.base.ref}`,
@@ -33069,8 +33059,8 @@ class CommitAction {
         });
     }
     async getDiff(path) {
-        (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "--depth=2", "origin", this.sha]);
-        const { stdout } = (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "diff", "HEAD^", "HEAD", "--", path]);
+        await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "--depth=2", "origin", this.sha]);
+        const stdout = await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "diff", "HEAD^", "HEAD", "--", path]);
         return stdout;
     }
 }
@@ -33107,6 +33097,8 @@ const _isLockbFile = (filename) => {
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(7784);
 /* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2563);
+
 
 
 const _owner = "oven-sh";
@@ -33128,7 +33120,7 @@ class BunInstaller {
             return canonicalVersion;
         }
         const url = this._getDownloadUrl(canonicalVersion);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Downloading from ${url}...`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Downloading from ${url}`);
         const path = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.downloadTool(url);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Downloaded to ${path}`);
         const extractedPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.extractZip(path);
@@ -33137,6 +33129,15 @@ class BunInstaller {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Cached to ${binPath}`);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath(binPath);
         return canonicalVersion;
+    }
+    async installed() {
+        try {
+            await (0,_sh__WEBPACK_IMPORTED_MODULE_2__.sh)(["bun", "--version"]);
+            return true;
+        }
+        catch {
+            return false;
+        }
     }
     _getDownloadUrl(version) {
         // https://github.com/oven-sh/bun/releases/download/bun-<VERSION>/bun-<PLATFORM>-<ARCH>.zip
@@ -33316,7 +33317,7 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(7672);
 /* harmony import */ var _bun__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(5436);
 /* harmony import */ var _github__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(978);
-/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(8303);
+/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(2563);
 
 
 
@@ -33335,11 +33336,12 @@ const main = async () => {
             repo: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.repo,
             owner: _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.owner,
         });
-        if ((0,_action__WEBPACK_IMPORTED_MODULE_3__/* .hasBun */ .Gc)() && inputs.bunVersion) {
+        const installer = new _bun__WEBPACK_IMPORTED_MODULE_4__/* .BunInstaller */ .i(github);
+        const alreadyInstalled = await installer.installed();
+        if (alreadyInstalled && inputs.bunVersion) {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.warning("`bun-version` is specified but bun is already installed. Skipping installation.");
         }
         else {
-            const installer = new _bun__WEBPACK_IMPORTED_MODULE_4__/* .BunInstaller */ .i(github);
             const version = inputs.bunVersion ?? "latest";
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("Installing bun...");
             const installedVersion = await installer.install(version);
@@ -33347,10 +33349,10 @@ const main = async () => {
         }
         // set git config
         node_fs__WEBPACK_IMPORTED_MODULE_0___default().writeFileSync(".gitattributes", "bun.lockb diff=lockb");
-        (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "core.attributesFile", ".gitattributes"]);
-        (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "diff.lockb.textconv", "bun"]);
-        (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "diff.lockb.binary", "true"]);
-        (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "--list"]);
+        await (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "core.attributesFile", ".gitattributes"]);
+        await (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "diff.lockb.textconv", "bun"]);
+        await (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "diff.lockb.binary", "true"]);
+        await (0,_sh__WEBPACK_IMPORTED_MODULE_6__.sh)(["git", "config", "--list"]);
         const action = (() => {
             if (_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.eventName === "pull_request") {
                 const pullRequest = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.payload.pull_request;
@@ -33422,33 +33424,34 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ 8303:
+/***/ 2563:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "sh": () => (/* binding */ sh)
+/* harmony export */ });
+/* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(1514);
+/* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_exec__WEBPACK_IMPORTED_MODULE_0__);
 
-// EXPORTS
-__nccwpck_require__.d(__webpack_exports__, {
-  "sh": () => (/* binding */ sh)
-});
-
-;// CONCATENATED MODULE: external "node:child_process"
-const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(2186);
-;// CONCATENATED MODULE: ./src/sh.ts
-
-
-const sh = (commands) => {
-    core.debug(`$ ${commands.join(" ")}`);
-    const result = (0,external_node_child_process_namespaceObject.spawnSync)(commands[0], commands.slice(1), {
-        shell: true,
-        encoding: "utf-8",
+const sh = async (commands) => {
+    let stdout = "";
+    let stderr = "";
+    const code = await _actions_exec__WEBPACK_IMPORTED_MODULE_0__.exec(commands[0], commands.slice(1), {
+        ignoreReturnCode: true,
+        silent: true,
+        listeners: {
+            stdout: (data) => {
+                stdout += data.toString();
+            },
+            stderr: (data) => {
+                stderr += data.toString();
+            },
+        },
     });
-    if (result.status !== 0) {
-        throw new Error(result.stderr);
+    if (code !== 0) {
+        throw new Error(stderr);
     }
-    core.debug(result.stdout);
-    return result;
+    return stdout;
 };
 
 
