@@ -35,6 +35,7 @@ export class BunInstaller {
     core.debug(`Cached to ${binPath}`);
 
     core.addPath(binPath);
+    await sh(["bun", "--version"]);
 
     return canonicalVersion;
   }

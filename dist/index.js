@@ -33128,6 +33128,7 @@ class BunInstaller {
         const binPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.cacheDir(extractedPath, "bun", canonicalVersion);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Cached to ${binPath}`);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath(binPath);
+        await (0,_sh__WEBPACK_IMPORTED_MODULE_2__.sh)(["bun", "--version"]);
         return canonicalVersion;
     }
     async installed() {
