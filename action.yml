@@ -11,7 +11,9 @@ inputs:
     required: false
     default: ${{ github.token }}
   bun-version:
-    description: The version of bun to install
+    description: |
+      The version of bun to install. If not provided, the latest version will be installed.
+      If already bun is installed, this input is ignored.
     required: false
   # TODO: bun-version-file
 
