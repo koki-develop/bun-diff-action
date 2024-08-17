@@ -33087,17 +33087,25 @@ const _isLockbFile = (filename) => {
 
 /***/ }),
 
-/***/ 5436:
+/***/ 6839:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "i": () => (/* binding */ BunInstaller)
-/* harmony export */ });
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(7784);
-/* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2563);
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "i": () => (/* binding */ BunInstaller)
+});
+
+;// CONCATENATED MODULE: external "node:path"
+const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
+var tool_cache = __nccwpck_require__(7784);
+// EXTERNAL MODULE: ./src/sh.ts
+var sh = __nccwpck_require__(2563);
+;// CONCATENATED MODULE: ./src/bun.ts
+
 
 
 
@@ -33110,30 +33118,31 @@ class BunInstaller {
     }
     async install(version) {
         const canonicalVersion = await this._getVersion(version);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`bun ${canonicalVersion} will be installed`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Platform: ${process.platform}`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Arch: ${process.arch}`);
-        const cacheDir = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.find("bun", canonicalVersion, process.arch);
+        core.debug(`bun ${canonicalVersion} will be installed`);
+        core.debug(`Platform: ${process.platform}`);
+        core.debug(`Arch: ${process.arch}`);
+        const os = this._getOSInfo();
+        const cacheDir = tool_cache.find("bun", canonicalVersion, process.arch);
         if (cacheDir) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Cached bun ${canonicalVersion} found`);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath(cacheDir);
+            core.debug(`Cached bun ${canonicalVersion} found`);
+            core.addPath(external_node_path_namespaceObject.join(cacheDir, `bun-${os.platform}-${os.arch}`));
             return canonicalVersion;
         }
         const url = this._getDownloadUrl(canonicalVersion);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Downloading from ${url}`);
-        const path = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.downloadTool(url);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Downloaded to ${path}`);
-        const extractedPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.extractZip(path);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Extracted to ${extractedPath}`);
-        const binPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.cacheDir(extractedPath, "bun", canonicalVersion);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Cached to ${binPath}`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath(binPath);
-        await (0,_sh__WEBPACK_IMPORTED_MODULE_2__.sh)(["bun", "--version"]);
+        core.debug(`Downloading from ${url}`);
+        const downloadedPath = await tool_cache.downloadTool(url);
+        core.debug(`Downloaded to ${downloadedPath}`);
+        const extractedPath = await tool_cache.extractZip(downloadedPath);
+        core.debug(`Extracted to ${extractedPath}`);
+        const binPath = await tool_cache.cacheDir(extractedPath, "bun", canonicalVersion);
+        core.debug(`Cached to ${binPath}`);
+        core.addPath(external_node_path_namespaceObject.join(binPath, `bun-${os.platform}-${os.arch}`));
+        await (0,sh.sh)(["bun", "--version"]);
         return canonicalVersion;
     }
     async installed() {
         try {
-            await (0,_sh__WEBPACK_IMPORTED_MODULE_2__.sh)(["bun", "--version"]);
+            await (0,sh.sh)(["bun", "--version"]);
             return true;
         }
         catch {
@@ -33141,7 +33150,10 @@ class BunInstaller {
         }
     }
     _getDownloadUrl(version) {
-        // https://github.com/oven-sh/bun/releases/download/bun-<VERSION>/bun-<PLATFORM>-<ARCH>.zip
+        const { platform, arch } = this._getOSInfo();
+        return `https://github.com/${_owner}/${_repo}/releases/download/bun-${version}/bun-${platform}-${arch}.zip`;
+    }
+    _getOSInfo() {
         const platform = (() => {
             switch (process.platform) {
                 case "darwin":
@@ -33164,7 +33176,7 @@ class BunInstaller {
                     return "x64";
             }
         })();
-        return `https://github.com/${_owner}/${_repo}/releases/download/bun-${version}/bun-${platform}-${arch}.zip`;
+        return { platform, arch };
     }
     async _getVersion(version) {
         if (version === "latest") {
@@ -33316,7 +33328,7 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(5438);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(7672);
-/* harmony import */ var _bun__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(5436);
+/* harmony import */ var _bun__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(6839);
 /* harmony import */ var _github__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(978);
 /* harmony import */ var _sh__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(2563);
 
