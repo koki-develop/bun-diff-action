@@ -10,6 +10,10 @@ inputs:
     description: The GitHub token to use for creating/updating comments
     required: false
     default: ${{ github.token }}
+  bun-version:
+    description: The version of bun to install
+    required: false
+  # TODO: bun-version-file
 
 runs:
   using: node20

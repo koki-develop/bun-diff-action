@@ -26,15 +26,6 @@ export const extractMetadata = (comment: Comment): Metadata => {
   };
 };
 
-export const hasBun = () => {
-  try {
-    sh(["bun", "--version"]);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 export type CreateCommentParams = {
   diff: string;
   filename: string;
@@ -117,8 +108,8 @@ export class PullRequestAction implements Action {
   }
 
   async getDiff(path: string): Promise<string> {
-    sh(["git", "fetch", "origin", this.pullRequest.base.ref]);
-    const { stdout } = sh([
+    await sh(["git", "fetch", "origin", this.pullRequest.base.ref]);
+    const stdout = await sh([
       "git",
       "diff",
       `origin/${this.pullRequest.base.ref}`,
@@ -189,8 +180,8 @@ export class CommitAction implements Action {
   }
 
   async getDiff(path: string): Promise<string> {
-    sh(["git", "fetch", "--depth=2", "origin", this.sha]);
-    const { stdout } = sh(["git", "diff", "HEAD^", "HEAD", "--", path]);
+    await sh(["git", "fetch", "--depth=2", "origin", this.sha]);
+    const stdout = await sh(["git", "diff", "HEAD^", "HEAD", "--", path]);
     return stdout;
   }
 }

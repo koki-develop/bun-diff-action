@@ -30,7 +30,4 @@ jobs:
       pull-requests: write # Required to comment on the Pull Request
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
       - uses: ./
-        with:
-          token: ${{ github.token }}
