@@ -33374,7 +33374,9 @@ const main = async () => {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Existing comments:\n${comments
             .map((comment) => `* ${comment.id}`)
             .join("\n")}`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup("diffs");
+        if (lockbs.length > 0) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("Diffs:");
+        }
         for (const lockb of lockbs) {
             const diff = await action.getDiff(lockb);
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb);
@@ -33395,7 +33397,6 @@ const main = async () => {
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Created.");
             }
         }
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
         for (const comment of comments) {
             const metadata = (0,_action__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
             if (!lockbs.some((lockb) => metadata.path === lockb)) {

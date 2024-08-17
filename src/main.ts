@@ -74,7 +74,9 @@ export const main = async () => {
         .join("\n")}`,
     );
 
-    core.startGroup("diffs");
+    if (lockbs.length > 0) {
+      core.info("Diffs:");
+    }
     for (const lockb of lockbs) {
       const diff = await action.getDiff(lockb);
       core.startGroup(lockb);
@@ -95,7 +97,6 @@ export const main = async () => {
         core.debug("Created.");
       }
     }
-    core.endGroup();
 
     for (const comment of comments) {
       const metadata = extractMetadata(comment);
