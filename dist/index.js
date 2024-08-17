@@ -33351,8 +33351,10 @@ const main = async () => {
         });
         const installer = new _bun__WEBPACK_IMPORTED_MODULE_4__/* .BunInstaller */ .i(github);
         const alreadyInstalled = await installer.installed();
-        if (alreadyInstalled && inputs.bunVersion) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.warning("`bun-version` is specified but bun is already installed. Skipping installation.");
+        if (alreadyInstalled) {
+            if (inputs.bunVersion) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_1__.warning("`bun-version` is specified but bun is already installed. Skipping installation.");
+            }
         }
         else {
             const version = inputs.bunVersion ?? "latest";
