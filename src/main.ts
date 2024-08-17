@@ -25,10 +25,12 @@ export const main = async () => {
 
     const installer = new BunInstaller(github);
     const alreadyInstalled = await installer.installed();
-    if (alreadyInstalled && inputs.bunVersion) {
-      core.warning(
-        "`bun-version` is specified but bun is already installed. Skipping installation.",
-      );
+    if (alreadyInstalled) {
+      if (inputs.bunVersion) {
+        core.warning(
+          "`bun-version` is specified but bun is already installed. Skipping installation.",
+        );
+      }
     } else {
       const version = inputs.bunVersion ?? "latest";
       core.info("Installing bun...");
