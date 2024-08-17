@@ -68,11 +68,13 @@ export const main = async () => {
     }
 
     const comments = await action.listComments();
-    core.debug(
-      `Existing comments:\n${comments
-        .map((comment) => `* ${comment.id}`)
-        .join("\n")}`,
-    );
+    if (comments.length > 0) {
+      core.debug(
+        `Existing comments:\n${comments
+          .map((comment) => `* ${comment.id}`)
+          .join("\n")}`,
+      );
+    }
 
     if (lockbs.length > 0) {
       core.info("Diffs:");
