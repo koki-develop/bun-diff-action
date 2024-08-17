@@ -32961,7 +32961,16 @@ class PullRequestAction {
     }
     async listLockbFiles() {
         const files = await this.github.listPullRequestFiles(this.pullRequest.number);
-        return files.map((file) => file.filename).filter(_isLockbFile);
+        return files
+            .filter((file) => {
+            if (!_isLockbFile(file.filename))
+                return false;
+            return true;
+        })
+            .map((file) => ({
+            filename: file.filename,
+            previousFilename: file.previous_filename,
+        }));
     }
     async listComments() {
         const comments = await this.github.listReviewComments(this.pullRequest.number);
@@ -32998,15 +33007,19 @@ class PullRequestAction {
             commentId: comment.id,
         });
     }
-    async getDiff(path) {
+    async getDiff(file) {
         await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "origin", this.pullRequest.base.ref]);
+        const paths = [file.filename];
+        if (file.previousFilename) {
+            paths.unshift(file.previousFilename);
+        }
         const stdout = await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)([
             "git",
             "diff",
             `origin/${this.pullRequest.base.ref}`,
             "HEAD",
             "--",
-            path,
+            ...paths,
         ]);
         return stdout;
     }
@@ -33020,7 +33033,16 @@ class CommitAction {
     }
     async listLockbFiles() {
         const files = await this.github.listCommitFiles(this.sha);
-        return files.map((file) => file.filename).filter(_isLockbFile);
+        return files
+            .filter((file) => {
+            if (!_isLockbFile(file.filename))
+                return false;
+            return true;
+        })
+            .map((file) => ({
+            filename: file.filename,
+            previousFilename: file.previous_filename,
+        }));
     }
     async listComments() {
         const comments = await this.github.listCommitComments(this.sha);
@@ -33058,9 +33080,13 @@ class CommitAction {
             commentId: comment.id,
         });
     }
-    async getDiff(path) {
+    async getDiff(file) {
         await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "fetch", "--depth=2", "origin", this.sha]);
-        const stdout = await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "diff", "HEAD^", "HEAD", "--", path]);
+        const paths = [file.filename];
+        if (file.previousFilename) {
+            paths.unshift(file.previousFilename);
+        }
+        const stdout = await (0,_sh__WEBPACK_IMPORTED_MODULE_0__.sh)(["git", "diff", "HEAD^", "HEAD", "--", ...paths]);
         return stdout;
     }
 }
@@ -33396,10 +33422,12 @@ const main = async () => {
         if (lockbs.length > 0) {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("Diffs:");
         }
+        const willDeletePaths = [];
         for (const lockb of lockbs) {
             const diff = await action.getDiff(lockb);
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb);
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup(lockb.filename);
             if (diff.trim() === "") {
+                willDeletePaths.push(lockb.filename);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("No changes.");
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
                 continue;
@@ -33408,22 +33436,25 @@ const main = async () => {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
             const comment = comments.find((comment) => {
                 const metadata = (0,_action__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
-                return metadata.path === lockb;
+                return metadata.path === lockb.filename;
             });
             if (comment) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Updating comment ${comment.id}...`);
-                await action.updateComment({ comment, diff, filename: lockb });
+                await action.updateComment({ comment, diff, filename: lockb.filename });
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Updated.");
             }
             else {
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Creating comment...");
-                await action.createComment({ diff, filename: lockb });
+                await action.createComment({ diff, filename: lockb.filename });
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Created.");
             }
         }
         for (const comment of comments) {
             const metadata = (0,_action__WEBPACK_IMPORTED_MODULE_3__/* .extractMetadata */ .mU)(comment);
-            if (!lockbs.some((lockb) => metadata.path === lockb)) {
+            const shouldDeletePath = willDeletePaths.includes(metadata.path);
+            const hasChanges = lockbs.some((lockb) => metadata.path === lockb.filename);
+            const shouldDelete = shouldDeletePath || !hasChanges;
+            if (shouldDelete) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug(`Deleting comment ${comment.id}...`);
                 await action.deleteComment(comment);
                 _actions_core__WEBPACK_IMPORTED_MODULE_1__.debug("Deleted.");
