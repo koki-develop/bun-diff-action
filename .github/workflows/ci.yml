@@ -24,7 +24,14 @@ jobs:
     needs:
       - test
       - lint
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner:
+          - ubuntu-latest
+          - macos-13 # intel
+          - macos-latest # m1
+          - windows-latest
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: write # Required to comment on the commit
       pull-requests: write # Required to comment on the Pull Request
