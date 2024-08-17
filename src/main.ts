@@ -82,16 +82,9 @@ export const main = async () => {
       core.info("Diffs:");
     }
 
-    const willDeletePaths: string[] = [];
     for (const lockb of lockbs) {
       const diff = await action.getDiff(lockb);
       core.startGroup(lockb.filename);
-      if (diff.trim() === "") {
-        willDeletePaths.push(lockb.filename);
-        core.info("No changes.");
-        core.endGroup();
-        continue;
-      }
       core.info(diff);
       core.endGroup();
 
@@ -113,13 +106,7 @@ export const main = async () => {
     for (const comment of comments) {
       const metadata = extractMetadata(comment);
 
-      const shouldDeletePath = willDeletePaths.includes(metadata.path);
-      const hasChanges = lockbs.some(
-        (lockb) => metadata.path === lockb.filename,
-      );
-      const shouldDelete = shouldDeletePath || !hasChanges;
-
-      if (shouldDelete) {
+      if (!lockbs.some((lockb) => metadata.path === lockb.filename)) {
         core.debug(`Deleting comment ${comment.id}...`);
         await action.deleteComment(comment);
         core.debug("Deleted.");
