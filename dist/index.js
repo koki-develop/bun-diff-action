@@ -33118,24 +33118,24 @@ class BunInstaller {
     }
     async install(version) {
         const canonicalVersion = await this._getVersion(version);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`bun ${canonicalVersion} will be installed`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`Platform: ${process.platform}`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`Arch: ${process.arch}`);
-        const cacheDir = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1___default().find("bun", canonicalVersion, process.arch);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`bun ${canonicalVersion} will be installed`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Platform: ${process.platform}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Arch: ${process.arch}`);
+        const cacheDir = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.find("bun", canonicalVersion, process.arch);
         if (cacheDir) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`Cached bun ${canonicalVersion} found`);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0___default().addPath(cacheDir);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Cached bun ${canonicalVersion} found`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath(cacheDir);
             return canonicalVersion;
         }
         const url = this._getDownloadUrl(canonicalVersion);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`Downloading from ${url}...`);
-        const path = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1___default().downloadTool(url);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`Downloaded to ${path}`);
-        const extractedPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1___default().extractZip(path);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`Extracted to ${extractedPath}`);
-        const binPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1___default().cacheDir(extractedPath, "bun", canonicalVersion);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug(`Cached to ${binPath}`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0___default().addPath(binPath);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Downloading from ${url}...`);
+        const path = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.downloadTool(url);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Downloaded to ${path}`);
+        const extractedPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.extractZip(path);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Extracted to ${extractedPath}`);
+        const binPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_1__.cacheDir(extractedPath, "bun", canonicalVersion);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Cached to ${binPath}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.addPath(binPath);
         return canonicalVersion;
     }
     _getDownloadUrl(version) {
