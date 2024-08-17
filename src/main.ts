@@ -8,6 +8,7 @@ import {
   extractMetadata,
   hasBun,
 } from "./action";
+import { BunInstaller } from "./bun";
 import { GitHub, type PullRequest } from "./github";
 import { sh } from "./sh";
 
@@ -15,6 +16,7 @@ export const main = async () => {
   try {
     const inputs = {
       token: core.getInput("token"),
+      bunVersion: core.getInput("bun-version") || undefined,
     } as const;
     const github = new GitHub({
       token: inputs.token,
@@ -22,7 +24,17 @@ export const main = async () => {
       owner: context.repo.owner,
     });
 
-    if (!hasBun()) throw new Error("bun is not installed.");
+    if (hasBun() && inputs.bunVersion) {
+      core.warning(
+        "`bun-version` is specified but bun is already installed. Skipping installation.",
+      );
+    } else {
+      const installer = new BunInstaller(github);
+      const version = inputs.bunVersion ?? "latest";
+      core.info("Installing bun...");
+      const installedVersion = await installer.install(version);
+      core.info(`Installed bun ${installedVersion}`);
+    }
 
     // set git config
     fs.writeFileSync(".gitattributes", "bun.lockb diff=lockb");
@@ -62,6 +74,7 @@ export const main = async () => {
         .join("\n")}`,
     );
 
+    core.startGroup("diffs");
     for (const lockb of lockbs) {
       const diff = await action.getDiff(lockb);
       core.startGroup(lockb);
@@ -82,6 +95,7 @@ export const main = async () => {
         core.debug("Created.");
       }
     }
+    core.endGroup();
 
     for (const comment of comments) {
       const metadata = extractMetadata(comment);
