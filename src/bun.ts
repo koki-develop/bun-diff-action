@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import type { GitHub } from "./github";
@@ -5,6 +6,11 @@ import { sh } from "./sh";
 
 const _owner = "oven-sh";
 const _repo = "bun";
+
+type OSInfo = {
+  platform: string;
+  arch: string;
+};
 
 export class BunInstaller {
   constructor(private readonly github: GitHub) {}
@@ -15,26 +21,28 @@ export class BunInstaller {
     core.debug(`Platform: ${process.platform}`);
     core.debug(`Arch: ${process.arch}`);
 
+    const os = this._getOSInfo();
+
     const cacheDir = tc.find("bun", canonicalVersion, process.arch);
     if (cacheDir) {
       core.debug(`Cached bun ${canonicalVersion} found`);
-      core.addPath(cacheDir);
+      core.addPath(path.join(cacheDir, `bun-${os.platform}-${os.arch}`));
       return canonicalVersion;
     }
 
     const url = this._getDownloadUrl(canonicalVersion);
     core.debug(`Downloading from ${url}`);
 
-    const path = await tc.downloadTool(url);
-    core.debug(`Downloaded to ${path}`);
+    const downloadedPath = await tc.downloadTool(url);
+    core.debug(`Downloaded to ${downloadedPath}`);
 
-    const extractedPath = await tc.extractZip(path);
+    const extractedPath = await tc.extractZip(downloadedPath);
     core.debug(`Extracted to ${extractedPath}`);
 
     const binPath = await tc.cacheDir(extractedPath, "bun", canonicalVersion);
     core.debug(`Cached to ${binPath}`);
 
-    core.addPath(binPath);
+    core.addPath(path.join(binPath, `bun-${os.platform}-${os.arch}`));
     await sh(["bun", "--version"]);
 
     return canonicalVersion;
@@ -50,8 +58,11 @@ export class BunInstaller {
   }
 
   private _getDownloadUrl(version: string): string {
-    // https://github.com/oven-sh/bun/releases/download/bun-<VERSION>/bun-<PLATFORM>-<ARCH>.zip
+    const { platform, arch } = this._getOSInfo();
+    return `https://github.com/${_owner}/${_repo}/releases/download/bun-${version}/bun-${platform}-${arch}.zip`;
+  }
 
+  private _getOSInfo(): OSInfo {
     const platform = (() => {
       switch (process.platform) {
         case "darwin":
@@ -76,7 +87,7 @@ export class BunInstaller {
       }
     })();
 
-    return `https://github.com/${_owner}/${_repo}/releases/download/bun-${version}/bun-${platform}-${arch}.zip`;
+    return { platform, arch };
   }
 
   private async _getVersion(version: string): Promise<string> {
