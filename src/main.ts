@@ -85,9 +85,9 @@ export const main = async () => {
     const willDeletePaths: string[] = [];
     for (const lockb of lockbs) {
       const diff = await action.getDiff(lockb);
-      core.startGroup(lockb);
+      core.startGroup(lockb.filename);
       if (diff.trim() === "") {
-        willDeletePaths.push(lockb);
+        willDeletePaths.push(lockb.filename);
         core.info("No changes.");
         core.endGroup();
         continue;
@@ -97,15 +97,15 @@ export const main = async () => {
 
       const comment = comments.find((comment) => {
         const metadata = extractMetadata(comment);
-        return metadata.path === lockb;
+        return metadata.path === lockb.filename;
       });
       if (comment) {
         core.debug(`Updating comment ${comment.id}...`);
-        await action.updateComment({ comment, diff, filename: lockb });
+        await action.updateComment({ comment, diff, filename: lockb.filename });
         core.debug("Updated.");
       } else {
         core.debug("Creating comment...");
-        await action.createComment({ diff, filename: lockb });
+        await action.createComment({ diff, filename: lockb.filename });
         core.debug("Created.");
       }
     }
@@ -114,7 +114,9 @@ export const main = async () => {
       const metadata = extractMetadata(comment);
 
       const shouldDeletePath = willDeletePaths.includes(metadata.path);
-      const hasChanges = lockbs.some((lockb) => metadata.path === lockb);
+      const hasChanges = lockbs.some(
+        (lockb) => metadata.path === lockb.filename,
+      );
       const shouldDelete = shouldDeletePath || !hasChanges;
 
       if (shouldDelete) {

@@ -7,6 +7,11 @@ export interface Comment {
   path: string | null;
 }
 
+export interface File {
+  filename: string;
+  previousFilename?: string;
+}
+
 const _metadataPrefix = "<!-- bun-diff-action: ";
 const _metadataSuffix = " -->";
 
@@ -38,12 +43,12 @@ export type UpdateCommentParams = {
 };
 
 export interface Action {
-  listLockbFiles: () => Promise<string[]>;
+  listLockbFiles: () => Promise<File[]>;
   listComments: () => Promise<Comment[]>;
   createComment: (params: CreateCommentParams) => Promise<void>;
   updateComment: (params: UpdateCommentParams) => Promise<void>;
   deleteComment: (comment: Comment) => Promise<void>;
-  getDiff: (path: string) => Promise<string>;
+  getDiff: (file: File) => Promise<string>;
 }
 
 export class PullRequestAction implements Action {
@@ -55,11 +60,19 @@ export class PullRequestAction implements Action {
     this.pullRequest = config.pullRequest;
   }
 
-  async listLockbFiles(): Promise<string[]> {
+  async listLockbFiles(): Promise<File[]> {
     const files = await this.github.listPullRequestFiles(
       this.pullRequest.number,
     );
-    return files.map((file) => file.filename).filter(_isLockbFile);
+    return files
+      .filter((file) => {
+        if (!_isLockbFile(file.filename)) return false;
+        return true;
+      })
+      .map((file) => ({
+        filename: file.filename,
+        previousFilename: file.previous_filename,
+      }));
   }
 
   async listComments(): Promise<Comment[]> {
@@ -107,15 +120,21 @@ export class PullRequestAction implements Action {
     });
   }
 
-  async getDiff(path: string): Promise<string> {
+  async getDiff(file: File): Promise<string> {
     await sh(["git", "fetch", "origin", this.pullRequest.base.ref]);
+
+    const paths = [file.filename];
+    if (file.previousFilename) {
+      paths.unshift(file.previousFilename);
+    }
+
     const stdout = await sh([
       "git",
       "diff",
       `origin/${this.pullRequest.base.ref}`,
       "HEAD",
       "--",
-      path,
+      ...paths,
     ]);
     return stdout;
   }
@@ -130,9 +149,17 @@ export class CommitAction implements Action {
     this.sha = config.sha;
   }
 
-  async listLockbFiles(): Promise<string[]> {
+  async listLockbFiles(): Promise<File[]> {
     const files = await this.github.listCommitFiles(this.sha);
-    return files.map((file) => file.filename).filter(_isLockbFile);
+    return files
+      .filter((file) => {
+        if (!_isLockbFile(file.filename)) return false;
+        return true;
+      })
+      .map((file) => ({
+        filename: file.filename,
+        previousFilename: file.previous_filename,
+      }));
   }
 
   async listComments(): Promise<Comment[]> {
@@ -179,9 +206,13 @@ export class CommitAction implements Action {
     });
   }
 
-  async getDiff(path: string): Promise<string> {
+  async getDiff(file: File): Promise<string> {
     await sh(["git", "fetch", "--depth=2", "origin", this.sha]);
-    const stdout = await sh(["git", "diff", "HEAD^", "HEAD", "--", path]);
+    const paths = [file.filename];
+    if (file.previousFilename) {
+      paths.unshift(file.previousFilename);
+    }
+    const stdout = await sh(["git", "diff", "HEAD^", "HEAD", "--", ...paths]);
     return stdout;
   }
 }
